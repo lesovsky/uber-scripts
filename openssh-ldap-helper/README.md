@@ -6,17 +6,11 @@ support for non-anonymous access to ldap
 
 /etc/ldap.conf example:
 
-<pre><code>uri ldap://auth1.server.ru ldap://auth2.server.ru ldap://auth3.server.ru
-port 636
+<pre><code>
 binddn cn=role,ou=allowed,ou=make,ou=requests,ou=to,dc=ldap
 bindpw your_password_here
 base ou=where,ou=performs,ou=search,ou=in,dc=ldap
 pam_filter objectClass=posixAccount
-timelimit 30
-bind_timelimit 30
-ssl start_tls
-tls_cacert /etc/openldap/cacerts/cacert.pem
-pam_password md5
 </code></pre>
 
 todo
