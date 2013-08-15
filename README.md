@@ -7,6 +7,8 @@ Index:
 - postgresql/pgproc.sh - show postgres processlist, lock and allow cancel or terminate process backends.
 - postgresql/pgbackup/clonepg.sh - create basebackup of postgresql server cluster and perform validation if required.
 - postgresql/pgbackup/basebackup-validation.sh -  perform basebackup validation.
+- openssh-ldap-helper/openssh-ldap-helper.sh - perform ssh pubkey validation through LDAP (first draft, very experimental)
+
 
 --
 
