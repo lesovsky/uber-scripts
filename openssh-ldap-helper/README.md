@@ -7,6 +7,7 @@ support for non-anonymous access to ldap
 /etc/ldap.conf example:
 
 <pre><code>
+uri ldap://ldap1.server.ru ldap://ldap2.server.ru ldap://ldap3.server.ru
 binddn cn=role,ou=allowed,ou=make,ou=requests,ou=to,dc=ldap
 bindpw your_password_here
 base ou=where,ou=performs,ou=search,ou=in,dc=ldap
