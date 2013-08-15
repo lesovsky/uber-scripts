@@ -6,8 +6,8 @@ support for non-anonymous access to ldap
 
 /etc/ldap.conf example:
 
-```uri ldap://auth1.railsc.ru ldap://auth2.railsc.ru ldap://auth3.railsc.ru
-port 636
+```uri ldap://auth1.server.ru ldap://auth2.server.ru ldap://auth3.server.ru\n
+port 636\n
 binddn cn=role,ou=allowed,ou=make,ou=requests,ou=to,dc=ldap
 bindpw your_password_here
 base ou=where,ou=performs,ou=search,ou=in,dc=ldap
