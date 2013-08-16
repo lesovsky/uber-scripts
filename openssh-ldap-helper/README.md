@@ -25,6 +25,7 @@ AuthorizedKeysCommand /usr/libexec/openssh/openssh-ldap-helper
 AuthorizedKeysCommandUser root
 # vi /etc/ldap.conf
 # chown root: /etc/ldap.conf && chmod 600 /etc/ldap.conf 
+# /usr/libexec/openssh/openssh-ldap-helper username
 
 Minimal /etc/ldap.conf example:
 uri ldap://ldap1.server.org ldap://ldap2.server.org ldap://ldap3.server.org
