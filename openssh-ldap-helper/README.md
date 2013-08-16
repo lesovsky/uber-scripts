@@ -1,4 +1,4 @@
-*openssh-ldap-helper/openssh-ldap-helper* -   perform ssh pubkey validation through LDAP 
+**openssh-ldap-helper/openssh-ldap-helper** -   perform ssh pubkey validation through LDAP 
 
 - starting with OpenSSH version 6.2;
 - based on ldapsearch utility;
@@ -13,7 +13,7 @@
 - support for multiple keys stored in LDAP account;
 - support for commands and options attached in publickey (no-pty,command="...",no-agent-forwarding, etc).
 
-*Install*
+**Install**
 <pre><code>
 # git clone https://github.com/lesovsky/uber-scripts/tree/master/openssh-ldap-helper
 # mkdir /usr/libexec/openssh
@@ -25,16 +25,12 @@ AuthorizedKeysCommand /usr/libexec/openssh/openssh-ldap-helper
 AuthorizedKeysCommandUser root
 # vi /etc/ldap.conf
 # chown root: /etc/ldap.conf && chmod 600 /etc/ldap.conf 
-</code>
 
-*Minimal /etc/ldap.conf example:*
-<code>
+Minimal /etc/ldap.conf example:
 uri ldap://ldap1.server.org ldap://ldap2.server.org ldap://ldap3.server.org
 base ou=where,ou=performs,ou=search,ou=in,dc=ldap
-</code>
 
-*Full /etc/ldap.conf example:*
-<code>
+Full /etc/ldap.conf example:
 uri ldap://ldap1.server.org ldap://ldap2.server.org ldap://ldap3.server.org
 binddn cn=someuser,ou=somegroup,ou=in,dc=ldap
 bindpw plaintext_password_here
