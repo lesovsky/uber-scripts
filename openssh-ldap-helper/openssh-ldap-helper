@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Description:	OpenSSH LDAP AuthorizedKeys helper (for OpenSSH >=6.2).
+# Author:	Lesovsky A.V. <lesovsky@gmail.com>
+# Version:	0.2
+
+CONF='/etc/ldap.conf'
+
+# Sanity check.
+if [ ! -f $CONF ]; then logger -t openssh-ldap-publickey "$CONF not found." ; exit 1; fi
+if which ldapsearch &>/dev/null; 
+  then LDAPSEARCH=$(which ldapsearch)
+  else logger -t openssh-ldap-publickey "ldapsearch not found." ; exit 1
+fi
+
+# Get param from config file.
+BINDDN=$(sed -n "s,^binddn \(.*\)$,\1,p" $CONF)
+BINDPW=$(sed -n "s,^bindpw \(.*\)$,\1,p" $CONF)
+BASE=$(sed -n "s,^base \(.*\)$,\1,p" $CONF)
+ACCOUNT_BASE=$(sed -n "s,^account_base \(.*\)$,\1,p" $CONF)
+GROUP_BASE=$(sed -n "s,^group_base \(.*\)$,\1,p" $CONF)
+SERVER_GROUP=$(sed -n "s,^server_group \(.*\)$,\1,p" $CONF)
+ACCOUNT_FILTER=$(sed -n "s,^account_filter \(.*\)$,\1,p" $CONF)
+PUBKEY_ATTR=$(sed -n "s,^pubkey_attr \(.*\)$,\1,p" $CONF)
+USER=$1
+
+# Check empty params, set defaults if empty parameters exists.
+if [ -z "$BASE" ]; then logger -t openssh-ldap-publickey "base dn for search not specified." ; exit 1; fi
+if [ -z "$ACCOUNT_BASE" ]; then ACCOUNT_BASE="$BASE"; fi
+if [ -z "$GROUP_BASE" ]; then GROUP_BASE="$BASE"; fi
+if [ -z "$ACCOUNT_FILTER" ]; then ACCOUNT_FILTER="objectClass=posixAccount"; fi 
+if [ -z "$PUBKEY_ATTR" ]; then PUBKEY_ATTR=sshPublicKey; fi
+
+# Find group membership, skip if SERVER_GROUP is not specified
+# Search perform through sssd, and perform search uniqueMember attribute, because with uniqueMember we can use nested groups.
+# See man 5 sssd.conf for ldap_group_member parameter.
+if [ ! -z "$SERVER_GROUP" ]; then
+  if ! getent group $SERVER_GROUP |grep -m1 -q -o $USER
+    then logger -t openssh-ldap-publickey "$USER is not in $SERVER_GROUP" ; exit 1;
+  fi
+fi
+
+# Set credentials params. Use noanonymous access if its specified through binddn and bindpw
+if [ ! -z "$BINDDN" -a ! -z "$BINDPW" ]
+  then CREDENTIALS="-D $BINDDN -w $BINDPW"
+  else CREDENTIALS=""
+fi
+
+# Find account pubkey attr
+$LDAPSEARCH -o ldif-wrap=no -LLL $CREDENTIALS -b "$ACCOUNT_BASE" "(&(${ACCOUNT_FILTER})(uid=${USER}))" $PUBKEY_ATTR \
+ | sed -n "s,^$PUBKEY_ATTR: \(.*\)$,\1,p"
