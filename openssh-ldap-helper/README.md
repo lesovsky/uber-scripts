@@ -47,9 +47,9 @@ pubkey_attr sshPublicKey
 
 Errors are written to syslog by logger utility. Check system logs.
 Test run:
-<code>
+<pre><code>
 # /usr/libexec/openssh/openssh-ldap-helper username
-</code>
+</code></pre>
 
 
 **todo**
