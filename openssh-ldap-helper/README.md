@@ -25,7 +25,7 @@ AuthorizedKeysCommand /usr/libexec/openssh/openssh-ldap-helper
 AuthorizedKeysCommandUser root
 # vi /etc/ldap.conf
 # chown root: /etc/ldap.conf && chmod 600 /etc/ldap.conf 
-# /usr/libexec/openssh/openssh-ldap-helper username
+Restart sshd service now.
 
 Minimal /etc/ldap.conf example:
 uri ldap://ldap1.server.org ldap://ldap2.server.org ldap://ldap3.server.org
@@ -43,6 +43,14 @@ server_group production-servers
 pubkey_attr sshPublicKey
 </code></pre>
 
-todo
+**Troubleshoot**
+
+Errors are written to syslog by logger utility. Check system logs.
+Test run:
+# /usr/libexec/openssh/openssh-ldap-helper username
+
+
+
+**todo**
 - debugging
 - include help
