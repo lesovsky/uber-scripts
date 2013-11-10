@@ -1,0 +1,6 @@
+# my bashrc file
+
+# Functions.
+# showqueue is used for watching the queue's total size for the specified network port.
+function showqueue { netstat -tn |grep :$1 | awk -v port=$1 '{recv += $2} {send += $3} END {print "Port: "port" Recv-Q: "recv" Send-Q: "send}'; }
+export -f showqueue
