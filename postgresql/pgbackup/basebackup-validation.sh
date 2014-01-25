@@ -1,52 +1,77 @@
 #!/usr/bin/env bash
-# Perform basebackup validation
+# Perform basebackup validation, version 0.2
 
-PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-PG_CTL=$(which pg_ctl)
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 CLONEPG_LOCK="/tmp/clonepg.lock"
 VALIDATION_LOCK="/tmp/basebackup-validation.lock"
+PARAMS=$@
 
-usage (){
-echo "basebackup-validation.sh usage: "
-echo " -t, --target 	basebackup directory (required)"
-echo " -s, --sandbox	temp sandbox directory (required)"
-echo " -m, --mailto	send notify to email adrdesses (optional)"
+trap scriptExit SIGINT SIGTERM
+
+scriptExit() { 
+  rm -rf $CLUSTERDIR/
+  rm $VALIDATION_LOCK
 }
 
-if [ "$#" -eq 0 ]; then echo "basebackup-validation.sh: parameters is not specified"; usage; exit; fi
-if ! grep -qE '\-t=|\-\-target=' <<< $@ ; then echo "basebackup-validation.sh: basebackup is not specified."; usage; exit; fi
-if ! grep -qE '\-s=|\-\-sandbox=' <<< $@ ; then echo "basebackup-validation.sh: sandbox is not specified."; usage; exit; fi
+usage () {
+  echo "${0##*/} usage: "
+  echo " --backup=     basebackup directory or compressed file, supported: gzip, bzip2. (required)
+ --wal=        directory which contains WAL archives (optional)
+ --sandbox=    temp sandbox directory (required)
+ --mailto=     send notify to email adrdesses (optional)
 
-for param in "$@"
-  do
-    case $param in
-      -t=*|--target=*)
-      TARGETDB=$(echo $param | sed 's/[-a-zA-Z0-9]*=//')
-      ;;
-      -s=*|--sandbox=*)
-      SANDBOXDIR=$(echo $param | sed 's/[-a-zA-Z0-9]*=//')
-      PGLOG="$SANDBOXDIR/logfile"
-      ;;
-      -m=*|--mailto=*)
-      MAILTO=$(echo $param | sed 's/[-a-zA-Z0-9]*=//')
-      ;;
-      *)      
-      echo "basebackup-validation.sh: unknown parameter specified."; usage; exit
-      ;;
-    esac
-done
+Example:
+ ${0##*/} --backup=/var/tmp/backup.tar.bz2 --sandbox=/var/tmp/backup-test --mailto=ivanov@example.com,petrov@example.com"
+}
 
-if [ -f $CLONEPG_LOCK ]; then echo "Basebackup performs. Exit."; exit 1; fi
-if [ -f $VALIDATION_LOCK ]; then echo "Another validation running or previous validation crash uncleanly. Exit."; exit 1; fi
-if [ ! -d $SANDBOXDIR ]; then mkdir $SANDBOXDIR; fi
+getConfig() {
+  local lkey=$1
+  echo "$PARAMS" |sed -e 's:--:\n:g' |while read line; do echo $line |grep -P -w "$lkey=.*" |cut -d= -f2 |sed -e 's: $::'; done
+}
 
-rsync -a $TARGETDB/ $SANDBOXDIR/
+sanityCheck() {
+  [[ $(which pg_ctl) ]] && PG_CTL=$(which pg_ctl) || { echo "FATAL: pg_ctl not found. Exit."; exit 1; }
+  [[ $(which find) ]] && FIND=$(which find) || { echo "FATAL: find not found. Exit."; exit 1; }
+  [[ $(which nice) ]] && NICE="$(which nice) -n 19"
+  [[ $(which ionice) ]] && IONICE="$(which ionice) -c 3"
+  [[ $(which mail) ]] && MAIL=$(which mail) || echo "WARNING: mail not found, mail notification will not work."
+  [[ -z $PARAMS ]] && { echo "${0##*/}: parameters is not specified."; usage; exit 1; }
+  [[ -z $BACKUP ]] && { echo "${0##*/}: basebackup directory or archive is not specified."; usage; exit 1; }
+  [[ -z $SANDBOXDIR ]] && { echo "${0##*/}: sandbox directory is not specified."; usage; exit 1; }
+  [[ -f $CLONEPG_LOCK ]] && { echo "Basebackup performs. Exit."; exit 1; }
+  [[ -f $VALIDATION_LOCK ]] && { echo "Another validation running or previous validation crash uncleanly. Exit."; exit 1; }
+  [[ -d $SANDBOXDIR ]] || mkdir $SANDBOXDIR
+}
 
-cat > $SANDBOXDIR/recovery.conf << EOF
-restore_command = 'cp /opt/pgsql/pgbackup/archive/%f "%p"'
+prepareSandbox() {
+  type=$(file $BACKUP |awk '{print $2}')
+  case $type in
+    directory ) rsync -a $BACKUP/ $SANDBOXDIR/ ;;
+    gzip ) tar xzf $BACKUP -C $SANDBOXDIR/ ;;
+    bzip2 ) tar xjf $BACKUP -C $SANDBOXDIR/ ;;
+    * ) echo "${0##*/}: FATAL: unknown archive type. Supported types are: gzip,bzip2,directory."; exit 1 ;;
+  esac
+}
+
+checkPgVersion() {
+  local backupPgVersion=$(cat $PG_VERSION_FILE |cut -d. -f1,2 |tr -d .)
+  local currentPgVersion=$(pg_config |awk '/VERSION/{ print $4 }' |cut -d. -f1,2 |tr -d .)
+  [[ $currentPgVersion -ne $backupPgVersion ]] && { echo "FATAL: PostgreSQL installed version and backup version does not match. Exit."; exit 1; }
+}
+
+generateConfig() {
+if [[ -n $WALDIR ]]; then
+  cat > $CLUSTERDIR/recovery.conf << EOF
+restore_command = 'cp $WALDIR/"%f" "%p"'
 EOF
+else
+  cat > $CLUSTERDIR/recovery.conf << EOF
+restore_command = 'exit 0'
+EOF
+rm $CLUSTERDIR/backup_label
+fi
 
-cat > $SANDBOXDIR/postgresql.conf << EOF
+  cat > $CLUSTERDIR/postgresql.conf << EOF
 listen_addresses = '127.0.0.1'
 port = 9876
 max_connections = 100
@@ -56,27 +81,58 @@ checkpoint_segments = 3
 hot_standby = on
 EOF
 
-cat > $SANDBOXDIR/pg_hba.conf << EOF
+  cat > $CLUSTERDIR/pg_hba.conf << EOF
 local   all             all                                     trust
 host    all             all             127.0.0.1/32            trust
 EOF
 
-touch $SANDBOXDIR/pg_ident.conf
+  touch $CLUSTERDIR/pg_ident.conf
+}
 
-# start test postgres
-$PG_CTL -D $SANDBOXDIR start -l $PGLOG
+runPostgres() {
+  [[ -d $CLUSTERDIR/pg_xlog ]] || mkdir $CLUSTERDIR/pg_xlog
+  $PG_CTL -D $CLUSTERDIR start -l $PGLOG
+}
 
-# analyze log
-tail -fn0 $PGLOG | while read line ; do
-  echo "$line" | grep -E "database system is ready to accept connections|FATAL"
-  if [ $? = 0 ]; then
-    echo "database validation finished."
-    if [ -z $MAILTO ]; then MAILTO="/dev/null"; fi
-    tail -n 22 $PGLOG |mail -e -s "basebackup validation for $LATEST" $(echo $MAILTO |sed -e "s/,/ /g")
-    killall tail
-  fi
-done
+logAnalyze() {
+  tail -fn0 $PGLOG | while read line ; do
+    echo "$line" | grep -E "database system is ready to accept connections|FATAL"
+    if [ $? = 0 ]; then
+      echo "database validation finished."
+      if [ -z $MAILTO ]; then MAILTO="/dev/null"; fi
+      tail -n 15 $PGLOG |$MAIL -e -s "basebackup validation for $(date +\%d-\%b-\%Y)" $(echo $MAILTO |sed -e "s/,/ /g")
+      killall tail
+    fi
+  done
+}
 
-# stop and remove temp postgres
-$PG_CTL -D $SANDBOXDIR stop
-rm -rf $SANDBOXDIR/*
+stopPostgres() {
+  $PG_CTL -D $CLUSTERDIR -m fast stop
+  rm -rf $SANDBOXDIR/
+}
+
+main() {
+  BACKUP=$(getConfig backup)
+  SANDBOXDIR=$(getConfig sandbox)
+  WALDIR=$(getConfig wal)
+  MAILTO=$(getConfig mailto)
+
+  sanityCheck
+  touch $VALIDATION_LOCK 
+  prepareSandbox
+  
+  PG_VERSION_FILE=$($NICE $IONICE $FIND $SANDBOXDIR -type f -size -16c -name PG_VERSION -print0 -quit)
+  CLUSTERDIR=${PG_VERSION_FILE%/*}
+  
+  checkPgVersion
+  generateConfig
+
+  PGLOG="$CLUSTERDIR/postgresql.log"
+
+  runPostgres
+  logAnalyze
+  stopPostgres
+  rm $VALIDATION_LOCK
+}
+
+main
