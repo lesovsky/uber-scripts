@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Perform basebackup validation, version 0.2
+# Perform basebackup validation, version 0.3
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 CLONEPG_LOCK="/tmp/clonepg.lock"
@@ -73,7 +73,7 @@ fi
 
   cat > $CLUSTERDIR/postgresql.conf << EOF
 listen_addresses = '127.0.0.1'
-port = 9876
+port = 25432
 max_connections = 100
 shared_buffers = 128MB
 wal_level = hot_standby
@@ -94,16 +94,23 @@ runPostgres() {
   $PG_CTL -D $CLUSTERDIR start -l $PGLOG
 }
 
-logAnalyze() {
-  tail -fn0 $PGLOG | while read line ; do
-    echo "$line" | grep -E "database system is ready to accept connections|FATAL"
-    if [ $? = 0 ]; then
-      echo "database validation finished."
-      if [ -z $MAILTO ]; then MAILTO="/dev/null"; fi
-      tail -n 15 $PGLOG |$MAIL -e -s "basebackup validation for $(date +\%d-\%b-\%Y)" $(echo $MAILTO |sed -e "s/,/ /g")
-      killall tail
-    fi
+checkPostgres() {
+  local interval=60
+  local try=10
+  local response
+  for i in $(seq 0 $try); do
+    echo "debug: try is $i"
+    response=$(psql -qAtX -h 127.0.0.1 -p 25432 -c "SELECT pg_is_in_recovery()::int" -U postgres postgres)
+    [[ $response == 0 || $i == $try ]] && break
+    echo "debug: perform sleep"
+    sleep $interval
   done
+  [[ $response == 0 ]] && PG_STATUS="successful" || PG_STATUS="failed"
+}
+
+sendNotify() {
+  if [ -z $MAILTO ]; then MAILTO="/dev/null"; fi
+  tail -n 15 $PGLOG |$MAIL -e -s "$PG_STATUS basebackup validation for $(date +\%d-\%b-\%Y)" $(echo $MAILTO |sed -e "s/,/ /g")
 }
 
 stopPostgres() {
@@ -130,7 +137,10 @@ main() {
   PGLOG="$CLUSTERDIR/postgresql.log"
 
   runPostgres
-  logAnalyze
+
+  PG_STATUS=0
+  checkPostgres
+  sendNotify
   stopPostgres
   rm $VALIDATION_LOCK
 }
