@@ -37,6 +37,7 @@ sanityCheck() {
   [[ $(which mail) ]] && MAIL=$(which mail) || echo "WARNING: mail not found, mail notification will not work."
   [[ -z $PARAMS ]] && { echo "${0##*/}: parameters is not specified."; usage; exit 1; }
   [[ -z $BACKUP ]] && { echo "${0##*/}: basebackup directory or archive is not specified."; usage; exit 1; }
+  [[ -e $BACKUP ]] || { echo "${0##*/}: specified basebackup does not exists. Exit."; exit 1; }
   [[ -z $SANDBOXDIR ]] && { echo "${0##*/}: sandbox directory is not specified."; usage; exit 1; }
   [[ -f $CLONEPG_LOCK ]] && { echo "Basebackup performs. Exit."; exit 1; }
   [[ -f $VALIDATION_LOCK ]] && { echo "Another validation running or previous validation crash uncleanly. Exit."; exit 1; }
