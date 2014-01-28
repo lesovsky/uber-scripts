@@ -11,6 +11,7 @@ trap scriptExit SIGINT SIGTERM
 scriptExit() { 
   rm -rf $CLUSTERDIR/
   rm $VALIDATION_LOCK
+  exit 1
 }
 
 usage () {
@@ -55,7 +56,7 @@ prepareSandbox() {
 }
 
 checkPgVersion() {
-  [[ -f $PG_VERSION_FILE ]] || { echo "FATAL: PG_VERSION not found in backup, can't determine PostgreSQL version. Exit."; exit 1; }
+  [[ -f $PG_VERSION_FILE ]] || { echo "FATAL: PG_VERSION not found in backup, can't determine PostgreSQL version. Exit."; scriptExit; }
   local backupPgVersion=$(cat $PG_VERSION_FILE |cut -d. -f1,2 |tr -d .)
   local currentPgVersion=$(pg_config |awk '/VERSION/{ print $4 }' |cut -d. -f1,2 |tr -d .)
   [[ $currentPgVersion -ne $backupPgVersion ]] && { echo "FATAL: PostgreSQL installed version and backup version does not match. Exit."; exit 1; }
