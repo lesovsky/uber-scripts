@@ -67,5 +67,5 @@ rm $LOCK
 if [ ! -z "$VALIDATE" ]; then
   echo "validate enabled. start validation."
   if [ -z $MAILTO ]; then MAILTO="/dev/null"; fi 
-  ~postgres/bin/basebackup-validation.sh --target=$BACKUPDIR/$CURRENT --sandbox=$VALIDATE --mailto=$MAILTO
+  ~postgres/bin/basebackup-validation.sh --backup=$BACKUPDIR/$CURRENT --sandbox=$VALIDATE --mailto=$MAILTO
 fi
