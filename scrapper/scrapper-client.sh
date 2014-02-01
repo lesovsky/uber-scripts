@@ -56,7 +56,7 @@ sendData() {
   pgOpts="-h $pgDestHost -p $pgDestPort -U $pgDestUser"
 
   # send ...
-  psql $pgOpts -c "INSERT INTO servers (company,hostname,updated_at) VALUES ('home','$hostname',now())" $pgDestDb
+  psql $pgOpts -c "INSERT INTO servers (company,hostname,updated_at) VALUES ('MBT','$hostname',now())" $pgDestDb
   psql $pgOpts -c "INSERT INTO hardware (hostname,cpu,memory,network,storage,disks) VALUES ('$hostname','$cpuData','$memData','$netData','$storageData','$diskData')" $pgDestDb
   psql $pgOpts -c "INSERT INTO software (hostname,os,kernel,pg_version,pgb_version,databases) VALUES ('$hostname','$os','$kernel','$pgVersion','$pgbVersion','$pgDatabases')" $pgDestDb
 }
