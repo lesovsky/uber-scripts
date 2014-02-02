@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS servers (
   id SERIAL PRIMARY KEY,
   company text NOT NULL,
   hostname text UNIQUE NOT NULL,
+  is_alive boolean DEFAULT true,
   updated_at timestamp DEFAULT NOW()
 );
 CREATE TABLE IF NOT EXISTS hardware (

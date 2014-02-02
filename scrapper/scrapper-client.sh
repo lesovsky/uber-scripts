@@ -61,7 +61,7 @@ sendData() {
   psql $pgOpts -c "BEGIN;
     WITH upsert AS
     (
-      UPDATE servers SET updated_at=now() WHERE hostname='$hostname' RETURNING *
+      UPDATE servers SET updated_at=now(),is_alive=true WHERE hostname='$hostname' RETURNING *
     )
     INSERT INTO servers (company,hostname,updated_at) 
     SELECT '$company','$hostname',now() WHERE NOT EXISTS
