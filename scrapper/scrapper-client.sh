@@ -2,6 +2,7 @@
 # Description:	some cool descr here...
 # params: print only, or send
 
+company="Pentagon-21"
 export PATH="/usr/bin:/usr/local/bin:/usr/sbin:/usr/local/sbin:/bin:/sbin"
 
 PARAM="$@"
@@ -30,7 +31,7 @@ getData() {
   hostname=$(uname -n)
   os=$(lsb_release -d 2>/dev/null |awk -F: '{print $2}' |xargs echo)
   kernel=$(uname -sr)
-  ips=$(ip address list |grep -oE "inet [0-9]{1,3}(\.[0-9]{1,3}){3}" |awk '{ print $2 }' |grep -vE '^(127|10|172.(1[6-9]{1}|2[0-9]{1}|3[0-2]{1})|192\.168)\.' |xargs echo)
+  ip=$(ip address list |grep -oE "inet [0-9]{1,3}(\.[0-9]{1,3}){3}" |awk '{ print $2 }' |grep -vE '^(127|10|172.(1[6-9]{1}|2[0-9]{1}|3[0-2]{1})|192\.168)\.' |xargs echo)
 
   pgVersion=$($(ps h -o cmd -C postgres |grep "postgres -D" |cut -d' ' -f1) -V |cut -d" " -f3)
   pgbVersion=$(pgbouncer -V 2>/dev/null |cut -d" " -f3)
@@ -43,7 +44,7 @@ Memory:            $memData
 Storage:           $storageData
 Disks:             $diskData
 Network:           $netData
-System:            $hostname ($ips); $os; $kernel
+System:            $hostname ($ip); $os; $kernel
 PostgreSQL ver.:   $pgVersion
 pgBouncer ver.:    $pgbVersion
 PostgreSQL databases: $pgDatabases"
@@ -56,10 +57,36 @@ sendData() {
   pgDestDb=$(echo $PARAM |cut -d= -f2 |cut -d: -f4)
   pgOpts="-h $pgDestHost -p $pgDestPort -U $pgDestUser"
 
-  # send ...
-  psql $pgOpts -c "INSERT INTO servers (company,hostname,updated_at) VALUES ('MBT','$hostname',now())" $pgDestDb
-  psql $pgOpts -c "INSERT INTO hardware (hostname,cpu,memory,network,storage,disks) VALUES ('$hostname','$cpuData','$memData','$netData','$storageData','$diskData')" $pgDestDb
-  psql $pgOpts -c "INSERT INTO software (hostname,os,ip,kernel,pg_version,pgb_version,databases) VALUES ('$hostname','$os','$ips','$kernel','$pgVersion','$pgbVersion','$pgDatabases')" $pgDestDb
+  # new send with upsert
+  psql $pgOpts -c "BEGIN;
+    WITH upsert AS
+    (
+      UPDATE servers SET updated_at=now() WHERE hostname='$hostname' RETURNING *
+    )
+    INSERT INTO servers (company,hostname,updated_at) 
+    SELECT '$company','$hostname',now() WHERE NOT EXISTS
+    (
+      SELECT hostname FROM upsert WHERE hostname='$hostname'
+    );
+    WITH upsert AS
+    (
+      UPDATE hardware SET cpu='$cpuData',memory='$memData',network='$netData',storage='$storageData',disks='$diskData' WHERE hostname='$hostname' RETURNING *
+    )
+    INSERT INTO hardware (hostname,cpu,memory,network,storage,disks)
+    SELECT '$hostname','$cpuData','$memData','$netData','$storageData','$diskData' WHERE NOT EXISTS
+    (
+      SELECT hostname FROM hardware WHERE hostname='$hostname'
+    );
+    WITH upsert AS
+    (
+      UPDATE software SET os='$os',ip='$ip',kernel='$kernel',pg_version='$pgVersion',pgb_version='$pgbVersion',databases='$pgDatabases' WHERE hostname='$hostname' RETURNING *
+    )
+    INSERT INTO software (hostname,os,ip,kernel,pg_version,pgb_version,databases) 
+    SELECT '$hostname','$os','$ip','$kernel','$pgVersion','$pgbVersion','$pgDatabases' WHERE NOT EXISTS
+    (
+      SELECT hostname FROM software WHERE hostname='$hostname'
+    );
+    COMMIT;" $pgDestDb
 }
 
 main() {
