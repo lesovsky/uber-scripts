@@ -2,7 +2,7 @@
 # Description:	some cool descr here...
 # params: print only, or send
 
-company="Pentagon-21"
+company="1+1"
 export PATH="/usr/bin:/usr/local/bin:/usr/sbin:/usr/local/sbin:/bin:/sbin"
 
 PARAM="$@"
@@ -19,11 +19,11 @@ getData() {
   # required lspci for pci device_id and vendor_id translation
   storageData=$(lspci |awk -F: '/storage controller/ || /RAID/ { print $3 }' |xargs echo)
 
-  for disk in $(grep -Ewo '[s,h,v]d[a-z]' /proc/partitions); do
-    num=$(awk '/$disk/ {print $1":"$2; exit}' /proc/partitions)
-    size=$(echo $(($(cat /sys/dev/block/$(awk '/sda/ {print $1":"$2; exit} ' /proc/partitions)/size) * 512 / 1024 / 1024 / 1024)))
-    diskData="$disk size ${size}GiB"
+  for disk in $(grep -Ewo '[s,h,v]d[a-z]' /proc/partitions |sort -r |xargs echo); do
+    size=$(echo $(($(cat /sys/dev/block/$(grep -w $disk /proc/partitions |awk '{print $1":"$2}')/size) * 512 / 1024 / 1024 / 1024)))
+    diskData="$disk size ${size}GiB, $diskData"
   done
+  diskData=$(echo $diskData |sed -e 's/,$//')
 
   # required lspci for pci device_id and vendor_id translation
   netData=$(lspci |awk -F: '/Ethernet controller/ {print $3}' |xargs echo)
@@ -35,7 +35,7 @@ getData() {
 
   pgVersion=$($(ps h -o cmd -C postgres |grep "postgres -D" |cut -d' ' -f1) -V |cut -d" " -f3)
   pgbVersion=$(pgbouncer -V 2>/dev/null |cut -d" " -f3)
-  pgDatabases=$(psql -ltAF: -l -U postgres |cut -d: -f1 |grep -vE 'template|postgres')
+  pgDatabases=$(psql -ltAF: -l -U postgres |cut -d: -f1 |grep -vE 'template|postgres' |xargs echo)
 }
 
 printData() {
