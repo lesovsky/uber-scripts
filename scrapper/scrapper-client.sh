@@ -16,7 +16,7 @@ getData() {
   memData="physical memory: $memTotal; swap: $swapTotal"
 
   # required lspci for pci device_id and vendor_id translation
-  storageData=$(lspci |awk -F: '/storage controller/ { print $3 }')
+  storageData=$(lspci |awk -F: '/storage controller/ || /RAID/ { print $3 }' |xargs echo)
 
   for disk in $(grep -Ewo '[s,h,v]d[a-z]' /proc/partitions); do
     num=$(awk '/$disk/ {print $1":"$2; exit}' /proc/partitions)
