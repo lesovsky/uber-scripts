@@ -53,8 +53,8 @@ PostgreSQL databases: $pgDatabases"
 sendData() {
   pgDestHost=$(echo $PARAM |cut -d= -f2 |cut -d: -f1)
   pgDestPort=$(echo $PARAM |cut -d= -f2 |cut -d: -f2)
-  pgDestUser=$(echo $PARAM |cut -d= -f2 |cut -d: -f3)
-  pgDestDb=$(echo $PARAM |cut -d= -f2 |cut -d: -f4)
+  pgDestDb=$(echo $PARAM |cut -d= -f2 |cut -d: -f3)
+  pgDestUser=$(echo $PARAM |cut -d= -f2 |cut -d: -f4)
   pgOpts="-h $pgDestHost -p $pgDestPort -U $pgDestUser"
 
   # new send with upsert
@@ -102,10 +102,10 @@ main() {
   --usage|--help|* )
      echo "${0##*/} usage: 
 --print-only	only print data;
---send=a:b:c:d	send data to a remote server with the specified address(a), port(b), user(c) and database(d);
+--send=a:b:c:d	send data to a remote server with the specified address(a), port(b), database(c) and user(d);
 --usage,--help	print this message.
 
-Example:	${0##*/} --send=1.2.3.4:5432:user:db"
+Example:	${0##*/} --send=1.2.3.4:5432:db:user"
   esac
 }
 
