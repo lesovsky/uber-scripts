@@ -30,6 +30,7 @@ getData() {
   hostname=$(uname -n)
   os=$(lsb_release -d 2>/dev/null |awk -F: '{print $2}' |xargs echo)
   kernel=$(uname -sr)
+  ips=$(ip address list |grep -oE "inet [0-9]{1,3}(\.[0-9]{1,3}){3}" |awk '{ print $2 }' |grep -vE '^(127|10|172.(1[6-9]{1}|2[0-9]{1}|3[0-2]{1})|192\.168)\.' |xargs echo)
 
   pgVersion=$($(ps h -o cmd -C postgres |grep "postgres -D" |cut -d' ' -f1) -V |cut -d" " -f3)
   pgbVersion=$(pgbouncer -V 2>/dev/null |cut -d" " -f3)
@@ -42,7 +43,7 @@ Memory:            $memData
 Storage:           $storageData
 Disks:             $diskData
 Network:           $netData
-System:            $hostname; $os; $kernel
+System:            $hostname ($ips); $os; $kernel
 PostgreSQL ver.:   $pgVersion
 pgBouncer ver.:    $pgbVersion
 PostgreSQL databases: $pgDatabases"
@@ -58,7 +59,7 @@ sendData() {
   # send ...
   psql $pgOpts -c "INSERT INTO servers (company,hostname,updated_at) VALUES ('MBT','$hostname',now())" $pgDestDb
   psql $pgOpts -c "INSERT INTO hardware (hostname,cpu,memory,network,storage,disks) VALUES ('$hostname','$cpuData','$memData','$netData','$storageData','$diskData')" $pgDestDb
-  psql $pgOpts -c "INSERT INTO software (hostname,os,kernel,pg_version,pgb_version,databases) VALUES ('$hostname','$os','$kernel','$pgVersion','$pgbVersion','$pgDatabases')" $pgDestDb
+  psql $pgOpts -c "INSERT INTO software (hostname,os,ip,kernel,pg_version,pgb_version,databases) VALUES ('$hostname','$os','$ips','$kernel','$pgVersion','$pgbVersion','$pgDatabases')" $pgDestDb
 }
 
 main() {
