@@ -1,0 +1,1 @@
+1. Disk size collect does not work on systems which hasn't /sys/dev/block tree (CentOS 5 for example)
