@@ -79,12 +79,13 @@ fi
 # Try to keep environment pollution down, EPA loves us.
 unset use_color safe_term match_lhs
 
-# History behaviour settings
+# History behaviour settings.
 export HISTTIMEFORMAT="%h %d %H:%M:%S> "
 export HISTCONTROL=ignoredups
 export HISTSIZE=10000
 
-# Aliases
+# Aliases.
+alias pgb_console='psql -h 127.0.0.1 -p 6432 -U root pgbouncer'
 
 # Functions.
 # showqueue is used for watching the queue's total size for the specified network port.
@@ -94,3 +95,5 @@ export -f showqueue
 
 # Others
 export PATH="$PATH:~/bin"
+export pg_log="/var/log/postgresql/postgresql-`date +%Y-%m-%d`.log"
+export pgb_log="/var/log/postgresql/pgbouncer.log"
