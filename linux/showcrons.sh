@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 # Description:  Print all cron task
 # Comment:      To start with sudo use "sudo -iE /full/path/script_name"
 for c in /etc/crontab /etc/cron.*/* $(ls /var/spool/cron/crontabs/*)
