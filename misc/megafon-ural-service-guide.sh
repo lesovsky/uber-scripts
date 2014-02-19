@@ -20,7 +20,7 @@ Usage:
   --raw		print raw response from Service Guide,
   --balance	print account balance (for monitoring purposes),
   --traffic	print traffic information,
-  --all		print account, balance, traffic info,
+  --full	print account, balance, traffic info,
   --usage	print this help.
  phone_number	10-digits phone number (without country code).
  password	Service Guide password."
@@ -37,7 +37,7 @@ vAvailable=$(echo "$response" |grep "<VOLUME_AVAILABLE>" |head -n 1 |grep -oE ">
 vUsed=$(echo $(($vTotal - $vAvailable)))
 
 case $PARAM in
---all )
+--full )
 echo "$name (phone: $number status: $status)
 Plan: $plan, Total: $vTotal kB, Used: $vUsed kB, Available: $vAvailable kB.
 Balance: $balance RUR"
