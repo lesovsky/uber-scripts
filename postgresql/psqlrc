@@ -7,7 +7,7 @@
 -- show activity
 \set ll_activity 'select pid,datname,usename,application_name,client_addr,(now() - xact_start) as runtime, (now() - state_change) as state_change,waiting,state,query from pg_stat_activity where pid != pg_backend_pid()'
 -- show waiting backends
-\set ll_waiting 'select pid,datname,usename,application_name,client_addr,(now() - xact_start) as runtime, (now() - state_change) as state_change,waiting,state,query from pg_stat_activity where pid != pg_backend_pid() and waiting = \'true\''
+\set ll_waiting 'select pid,datname,usename,application_name,client_addr,(now() - xact_start) as runtime, (now() - state_change) as state_change,waiting,state,query from pg_stat_activity where pid != pg_backend_pid() and waiting'
 -- show connections count by state and waiting
 \set ll_connections 'select state,waiting,count(*) from pg_stat_activity where pid != pg_backend_pid() group by state,waiting order by 2 desc'
 -- show transactions which run longer than 1 minute
@@ -16,6 +16,9 @@
 \set ll_xact_5min 'select pid,datname,usename,application_name,client_addr,(now() - xact_start) as runtime, (now() - state_change) as state_change,waiting,state,query from pg_stat_activity where pid != pg_backend_pid() and (now() - xact_start) > \'5 min\''
 -- show transactions which run longer than 15 minute
 \set ll_xact_15min 'select pid,datname,usename,application_name,client_addr,(now() - xact_start) as runtime, (now() - state_change) as state_change,waiting,state,query from pg_stat_activity where pid != pg_backend_pid() and (now() - xact_start) > \'15 min\''
+
+-- experimental
+\set ll_locks 'select w.query as waiting_query,w.pid as w_pid,w.usename as w_user,w.state as w_state,l.query as locking_query,l.pid as l_pid,l.usename as l_user,l.state as l_state from pg_stat_activity w join pg_locks l1 on w.pid = l1.pid and not l1.granted join pg_locks l2 on l1.transactionid = l2.transactionid and l2.granted join pg_stat_activity l on l2.pid = l.pid where w.waiting'
 
 -- pg_stat_statements: http://www.postgresql.org/docs/9.3/static/pgstatstatements.html 
 \set show_slow_queries 'SELECT (total_time / 1000 / 60) as total_minutes, (total_time/calls) as average_time, query FROM pg_stat_statements ORDER BY 1 DESC LIMIT 100;'
