@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Description:	Check server system parameters
+# Description:	Check and print server system parameters
 
 export PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
 
@@ -26,7 +26,7 @@ echo "=== sysfs: transparent hugepages ===
    /sys/kernel/mm/transparent_hugepage/enabled: $(cat /sys/kernel/mm/transparent_hugepage/enabled)
    /sys/kernel/mm/transparent_hugepage/defrag: $(cat /sys/kernel/mm/transparent_hugepage/defrag)"
 
-# Ntpd or Ntpdate check
+# Time check
 echo "=== Ntpd info ==="
 if which ntpd &>/dev/null
   then 
@@ -36,3 +36,6 @@ if which ntpd &>/dev/null
     fi
   else echo "   Ntpd not found."
 fi
+echo "=== Clocksource: available and current clocksource ===
+   /sys/devices/system/clocksource/clocksource0/available_clocksource: $(cat /sys/devices/system/clocksource/clocksource0/available_clocksource)
+   /sys/devices/system/clocksource/clocksource0/current_clocksource: $(cat /sys/devices/system/clocksource/clocksource0/current_clocksource)"
