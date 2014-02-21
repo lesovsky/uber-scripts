@@ -15,6 +15,6 @@ cp ~/tmp/uber-scripts-master/linux/*.sh ~/bin/
 cp ~/tmp/uber-scripts-master/linux/bashrc ~/.bashrc
 cp ~/tmp/uber-scripts-master/postgresql/psqlrc ~/.psqlrc
 
-(crontab -l; echo "*/10    *       *       *       *       ~/bin/setworkspace.sh &>/dev/null") |uniq - |crontab -
+(crontab -l; echo "*/10 * * * * ~/bin/setworkspace.sh &>/dev/null") |uniq - |crontab -
 
 rm -rf ~/tmp/*
