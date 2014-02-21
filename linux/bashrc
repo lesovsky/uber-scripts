@@ -85,17 +85,27 @@ export HISTCONTROL=ignoredups
 export HISTSIZE=10000
 
 # Aliases.
-alias pgb_console='psql -h 127.0.0.1 -p 6432 -U root pgbouncer'
 
 # Functions.
-# showqueue is used for watching the queue's total size for the specified network port.
+# System-wide functions
 function showqueue { netstat -tn |grep :$1 | awk -v port=$1 '{recv += $2} {send += $3} END {print "Port: "port" Recv-Q: "recv" Send-Q: "send}'; }
+
+# PostgreSQL related function
 function sr_monitor91 { watch -n $1 "psql -h 127.0.0.1 -U postgres -c 'select procpid,usesysid,application_name,client_addr,backend_start,state,sent_location,write_location,replay_location,sync_state from pg_stat_replication order by 5'"; }
 function sr_monitor92 { watch -n $1 "psql -h 127.0.0.1 -U postgres -c 'select pid,usesysid,application_name,client_addr,backend_start,state,sent_location,write_location,replay_location,sync_state from pg_stat_replication order by 5'"; }
 
-export -f sr_monitor91
-export -f sr_monitor92
-export -f showqueue
+# PgBouncer related function. Attention
+function pgb_console {
+  if [[ $# -eq 0 ]];
+    then psql -h 127.0.0.1 -p 6432 -U root pgbouncer;
+    else psql -h 127.0.0.1 -p 6432 -U root pgbouncer -c "$*";
+  fi;
+}
+
+export -f showqueue	# showqueue is used for watching the queue's total size for the specified network port.
+export -f sr_monitor91	# streaming replication monitor for PostgreSQL 9.1 and earlier.
+export -f sr_monitor92	# streaming replication monitor for PostgreSQL 9.2 and never
+export -f pgb_console	# fast access to pgBouncer console
 
 # Others
 export PATH="$PATH:~/bin"
