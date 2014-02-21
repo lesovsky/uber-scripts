@@ -11,4 +11,7 @@ cp ~/tmp/uber-scripts-master/linux/bashrc ~/.bashrc
 cp ~/tmp/uber-scripts-master/postgresql/psqlrc ~/.psqlrc
 cp ~/tmp/uber-scripts-master/postgresql/server-checklist.sh ~/bin/
 cp ~/tmp/uber-scripts-master/linux/*.sh ~/bin/
+
+# add setworkspace into crontab
+
 rm -rf ~/tmp/*
