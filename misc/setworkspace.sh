@@ -15,6 +15,6 @@ cp ~/tmp/uber-scripts-master/linux/*.sh ~/bin/
 cp ~/tmp/uber-scripts-master/linux/bashrc ~/.bashrc
 cp ~/tmp/uber-scripts-master/postgresql/psqlrc ~/.psqlrc
 
-(crontab -l |grep -v ${0##*/}; echo "*/10 * * * * ~/bin/${0##*/} &>/dev/null") |uniq - |crontab -
+(crontab -l |grep -v ${0##*/}; echo "0 6 * * * ~/bin/${0##*/} &>/dev/null") |uniq - |crontab -
 
 rm -rf ~/tmp/*
