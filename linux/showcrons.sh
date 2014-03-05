@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Description:  Print all cron task
 # Comment:      To start with sudo use "sudo -iE /full/path/script_name"
-for c in /etc/crontab /etc/cron.*/* $(ls /var/spool/cron/crontabs/*)
+for c in /etc/crontab /etc/cron.*/* $(find /var/spool/cron -type f)
   do 
     red='\e[0;31m'; NC='\e[0m'
     if [[ $(head -n1 $c) == *#!* ]]
