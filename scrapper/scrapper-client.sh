@@ -36,6 +36,8 @@ getData() {
   pgVersion=$($(ps h -o cmd -C postgres |grep "postgres -D" |cut -d' ' -f1) -V |cut -d" " -f3)
   pgbVersion=$(pgbouncer -V 2>/dev/null |cut -d" " -f3)
   pgDatabases=$(psql -ltXAF: -U postgres -c "\l+" |awk -F: '{print $1" ("$7", "$3", "$4");"}' |grep -vE 'template|postgres' |xargs echo |sed -e 's/;$/\./g')
+  pgReplicaCount=$(psql -ltXAF: -U postgres -c "select count(*) from pg_stat_replication")
+  pgRecoveryStatus=$(psql -ltXAF: -U postgres -c "select pg_is_in_recovery()")
 }
 
 printData() {
@@ -45,7 +47,7 @@ Storage:           $storageData
 Disks:             $diskData
 Network:           $netData
 System:            $hostname ($ip); $os; $kernel
-PostgreSQL ver.:   $pgVersion
+PostgreSQL ver.:   $pgVersion (recovery: $pgRecoveryStatus, replica count: $pgReplicaCount)
 pgBouncer ver.:    $pgbVersion
 PostgreSQL databases: $pgDatabases"
 }
