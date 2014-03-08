@@ -35,7 +35,7 @@ getData() {
 
   pgVersion=$($(ps h -o cmd -C postgres |grep "postgres -D" |cut -d' ' -f1) -V |cut -d" " -f3)
   pgbVersion=$(pgbouncer -V 2>/dev/null |cut -d" " -f3)
-  pgDatabases=$(psql -ltAF: -l -U postgres |cut -d: -f1 |grep -vE 'template|postgres' |xargs echo)
+  pgDatabases=$(psql -ltXAF: -U postgres -c "\l+" |awk -F: '{print $1" ("$7", "$3", "$4");"}' |grep -vE 'template|postgres' |xargs echo |sed -e 's/;$/\./g')
 }
 
 printData() {
