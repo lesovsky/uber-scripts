@@ -39,3 +39,13 @@ fi
 echo "=== Clocksource: available and current clocksource ===
    /sys/devices/system/clocksource/clocksource0/available_clocksource: $(cat /sys/devices/system/clocksource/clocksource0/available_clocksource)
    /sys/devices/system/clocksource/clocksource0/current_clocksource: $(cat /sys/devices/system/clocksource/clocksource0/current_clocksource)"
+
+echo "=== EDAC ==="
+if [[ $(lsmod |grep edac) ]]
+  then
+    for i in $(ls /sys/devices/system/edac/mc/mc*/*e_count);
+      do echo "   $i - $(cat $i)";
+    done
+  else
+    echo "   edac modules not loaded"
+fi
