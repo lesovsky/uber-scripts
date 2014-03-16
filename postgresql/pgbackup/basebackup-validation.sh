@@ -105,6 +105,8 @@ EOF
 
 runPostgres() {
   [[ -d $CLUSTERDIR/pg_xlog ]] || mkdir $CLUSTERDIR/pg_xlog
+  [[ -d $CLUSTERDIR/pg_stat_tmp ]] || mkdir $CLUSTERDIR/pg_stat_tmp
+  chmod 700 $CLUSTERDIR
   $PG_CTL -D $CLUSTERDIR start -l $PGLOG
 }
 
