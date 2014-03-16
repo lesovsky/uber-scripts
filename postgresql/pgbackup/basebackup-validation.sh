@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Perform basebackup validation, version 0.3
+# Perform basebackup validation, version 0.4
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+COMPANY="company"
 CLONEPG_LOCK="/tmp/clonepg.lock"
 VALIDATION_LOCK="/tmp/basebackup-validation.lock"
 PARAMS=$@
@@ -9,7 +10,7 @@ PARAMS=$@
 trap scriptExit SIGINT SIGTERM
 
 scriptExit() { 
-  rm -rf $CLUSTERDIR/
+  [[ -n $CLUSTERDIR ]] && rm -rf $CLUSTERDIR/
   rm $VALIDATION_LOCK
   exit 1
 }
@@ -50,7 +51,8 @@ prepareSandbox() {
   case $type in
     directory ) rsync -a $BACKUP/ $SANDBOXDIR/ ;;
     gzip ) tar xzf $BACKUP -C $SANDBOXDIR/ ;;
-    bzip2 ) tar xjf $BACKUP -C $SANDBOXDIR/ ;;
+    bzip2 ) lbunzip2 -d -n 6 < $BACKUP |tar xf - -C $SANDBOXDIR/ ;;
+#    bzip2 ) tar xjf $BACKUP -C $SANDBOXDIR/ ;;
     * ) echo "${0##*/}: FATAL: unknown archive type. Supported types are: gzip,bzip2,directory."; exit 1 ;;
   esac
 }
