@@ -144,7 +144,7 @@ main() {
   touch $VALIDATION_LOCK 
   prepareSandbox
   
-  PG_VERSION_FILE=$($NICE $IONICE $FIND $SANDBOXDIR -type f -size -16c -name PG_VERSION -print0 -quit)
+  PG_VERSION_FILE=$($NICE $IONICE $FIND $SANDBOXDIR -type f -size -16c -name PG_VERSION |sort -r |head -n 1)
   CLUSTERDIR=${PG_VERSION_FILE%/*}
   
   checkPgVersion
