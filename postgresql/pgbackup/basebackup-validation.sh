@@ -126,7 +126,7 @@ checkPostgres() {
 
 sendNotify() {
   if [ -z $MAILTO ]; then MAILTO="/dev/null"; fi
-  tail -n 15 $PGLOG |$MAIL -e -s "$PG_STATUS basebackup validation for $(date +\%d-\%b-\%Y)" $(echo $MAILTO |sed -e "s/,/ /g")
+  tail -n 15 $PGLOG |$MAIL -e -s "$PG_STATUS basebackup validation on $COMPANY for $(date +\%d-\%b-\%Y)" $(echo $MAILTO |sed -e "s/,/ /g")
 }
 
 stopPostgres() {
