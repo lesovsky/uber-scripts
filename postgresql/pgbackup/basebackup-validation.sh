@@ -65,6 +65,11 @@ checkPgVersion() {
 }
 
 generateConfig() {
+local maxConnections=$(pg_controldata $CLUSTERDIR |grep '^Current max_connections setting:' |awk '{print $4}')
+local maxPreparedTransactions=$(pg_controldata $CLUSTERDIR |grep '^Current max_prepared_xacts setting:' |awk '{print $4}')
+local maxLocksPerTransaction=$(pg_controldata $CLUSTERDIR |grep '^Current max_locks_per_xact setting:' |awk '{print $4}')
+local walLevel=$(pg_controldata $CLUSTERDIR |grep '^Current wal_level setting:' |awk '{print $4}')
+
 if [[ -n $WALDIR ]]; then
   cat > $CLUSTERDIR/recovery.conf << EOF
 restore_command = 'cp $WALDIR/"%f" "%p"'
@@ -79,11 +84,15 @@ fi
   cat > $CLUSTERDIR/postgresql.conf << EOF
 listen_addresses = '127.0.0.1'
 port = 25432
-max_connections = 100
-shared_buffers = 128MB
-wal_level = hot_standby
-checkpoint_segments = 3
+max_connections = ${maxConnections:-100}
+max_prepared_transactions = ${maxPreparedTransactions:-0}
+max_locks_per_transaction = ${maxLocksPerTransaction:-128}
+wal_level = ${walLevel:-hot_standby}
+shared_buffers = 64MB
+wal_buffers = 32MB
+checkpoint_segments = 32
 hot_standby = on
+unix_socket_directory = '/tmp'
 EOF
 
   cat > $CLUSTERDIR/pg_hba.conf << EOF
