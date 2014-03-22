@@ -3,6 +3,7 @@
 # params: print only, or send
 
 company="1+1"
+psqlCmd="psql -ltXAF: -U postgres"
 export PATH="/usr/bin:/usr/local/bin:/usr/sbin:/usr/local/sbin:/bin:/sbin"
 
 PARAM="$@"
@@ -51,9 +52,9 @@ getData() {
 
   pgVersion=$($(ps h -o cmd -C postgres |grep "postgres -D" |cut -d' ' -f1) -V |cut -d" " -f3)
   pgbVersion=$(pgbouncer -V 2>/dev/null |cut -d" " -f3)
-  pgDatabases=$(psql -ltXAF: -U postgres -c "\l+" |awk -F: '{print $1" ("$7", "$3", "$4");"}' |grep -vE 'template|postgres' |xargs echo |sed -e 's/;$/\./g')
-  pgReplicaCount=$(psql -ltXAF: -U postgres -c "select count(*) from pg_stat_replication")
-  pgRecoveryStatus=$(psql -ltXAF: -U postgres -c "select pg_is_in_recovery()")
+  pgDatabases=$($psqlCmd -c "\l+" |awk -F: '{print $1" ("$7", "$3", "$4");"}' |grep -vE 'template|postgres' |xargs echo |sed -e 's/;$/\./g')
+  pgReplicaCount=$($psqlCmd -c "select count(*) from pg_stat_replication")
+  pgRecoveryStatus=$($psqlCmd -c "select pg_is_in_recovery()")
 }
 
 printData() {
