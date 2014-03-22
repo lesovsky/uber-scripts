@@ -73,7 +73,7 @@ sendData() {
   pgDestPort=$(echo $PARAM |grep -oiP "port=[a-z0-9\-\._]+" |cut -d= -f2)
   pgDestDb=$(echo $PARAM |grep -oiP "database=[a-z0-9\-\._]+" |cut -d= -f2)
   pgDestUser=$(echo $PARAM |grep -oiP "user=[a-z0-9\-\._]+" |cut -d= -f2)
-  pgOpts="-h ${pgDestHost:-127.0.0.1} -p ${pgDestPort:-5432} -U ${pgDestUser:-postgres}"
+  pgOpts="-h ${pgDestHost:-127.0.0.1} -p ${pgDestPort:-5432} -U ${pgDestUser:-scrapper}"
 
   # new send with upsert
   psql $pgOpts -c "BEGIN;
