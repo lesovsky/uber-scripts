@@ -108,10 +108,10 @@ sendData() {
     );
     WITH upsert AS
     (
-      UPDATE software SET os='$os',ip='$ip',kernel='$kernel',pg_version='$pgVersion',pgb_version='$pgbVersion',databases='$pgDatabases' WHERE hostname='$hostname' RETURNING *
+      UPDATE software SET os='$os',ip='$ip',kernel='$kernel',pg_version='PostgreSQL ver.: $pgVersion (recovery: $pgRecoveryStatus, replica count: $pgReplicaCount)',pgb_version='pgBouncer ver.: $pgbVersion',databases='$pgDatabases' WHERE hostname='$hostname' RETURNING *
     )
     INSERT INTO software (hostname,os,ip,kernel,pg_version,pgb_version,databases) 
-    SELECT '$hostname','$os','$ip','$kernel','$pgVersion','$pgbVersion','$pgDatabases' WHERE NOT EXISTS
+    SELECT '$hostname','$os','$ip','$kernel','PostgreSQL ver.: $pgVersion (recovery: $pgRecoveryStatus, replica count: $pgReplicaCount)','pgBouncer ver.: $pgbVersion','$pgDatabases' WHERE NOT EXISTS
     (
       SELECT hostname FROM software WHERE hostname='$hostname'
     );
