@@ -53,11 +53,11 @@ PostgreSQL databases: $pgDatabases"
 }
 
 sendData() {
-  pgDestHost=$(echo $PARAM |cut -d= -f2 |cut -d: -f1)
-  pgDestPort=$(echo $PARAM |cut -d= -f2 |cut -d: -f2)
-  pgDestDb=$(echo $PARAM |cut -d= -f2 |cut -d: -f3)
-  pgDestUser=$(echo $PARAM |cut -d= -f2 |cut -d: -f4)
-  pgOpts="-h $pgDestHost -p $pgDestPort -U $pgDestUser"
+  pgDestHost=$(echo $PARAM |grep -oiP "host=[a-z0-9\-\._]+" |cut -d= -f2)
+  pgDestPort=$(echo $PARAM |grep -oiP "port=[a-z0-9\-\._]+" |cut -d= -f2)
+  pgDestDb=$(echo $PARAM |grep -oiP "database=[a-z0-9\-\._]+" |cut -d= -f2)
+  pgDestUser=$(echo $PARAM |grep -oiP "user=[a-z0-9\-\._]+" |cut -d= -f2)
+  pgOpts="-h ${pgDestHost:-127.0.0.1} -p ${pgDestPort:-5432} -U ${pgDestUser:-postgres}"
 
   # new send with upsert
   psql $pgOpts -c "BEGIN;
@@ -88,7 +88,7 @@ sendData() {
     (
       SELECT hostname FROM software WHERE hostname='$hostname'
     );
-    COMMIT;" $pgDestDb
+    COMMIT;" ${pgDestDb:-scrapper}
 }
 
 main() {
