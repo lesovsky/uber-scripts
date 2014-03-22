@@ -43,7 +43,7 @@ getData() {
   diskData=$(echo $diskData |sed -e 's/,$//')
 
   # required lspci for pci device_id and vendor_id translation
-  netData=$(lspci |awk -F: '/Ethernet controller/ {print $3}' |xargs echo)
+  netData=$(lspci |awk -F: '/Ethernet controller/ {print $3}' |sort |uniq -c)
 
   hostname=$(uname -n)
   os=$(lsb_release -d 2>/dev/null |awk -F: '{print $2}' |xargs echo)
