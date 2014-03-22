@@ -14,7 +14,7 @@ companyList=$(psql -qAtX -h ${pgDestHost:-127.0.0.1} -p ${pgDestPort:-5432} -U $
 for company in $companyList; do
   # build company header
 echo "<table border='1' style='width:100%'>
-     <caption>$company</caption>"
+     <caption><span style="font-weight:bold">$company</span></caption>"
 
   # build server rows
   serverList=$(psql -qAtX -h ${pgDestHost:-127.0.0.1} -p ${pgDestPort:-5432} -U ${pgDestUser:-scrapper} -c "select c.company,c.hostname,s.ip,h.cpu,h.memory,h.storage,h.disks,h.network,s.os,s.kernel,s.pg_version,s.pgb_version,s.databases from servers c join hardware h on c.hostname = h.hostname join software s on c.hostname = s.hostname where company = '$company'" ${pgDestDb:-scrapper})
