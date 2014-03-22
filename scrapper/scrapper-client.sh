@@ -3,7 +3,7 @@
 # params: print only, or send
 
 company="1+1"
-psqlCmd="psql -ltXAF: -U postgres"
+psqlCmd="psql -tXAF: -U postgres"
 export PATH="/usr/bin:/usr/local/bin:/usr/sbin:/usr/local/sbin:/bin:/sbin"
 
 PARAM="$@"
@@ -50,9 +50,19 @@ getData() {
   kernel=$(uname -sr)
   ip=$(ip address list |grep -oE "inet [0-9]{1,3}(\.[0-9]{1,3}){3}" |awk '{ print $2 }' |grep -vE '^(127|10|172.(1[6-9]{1}|2[0-9]{1}|3[0-2]{1})|192\.168)\.' |xargs echo)
 
+  pgGetDbQuery="SELECT d.datname as name,
+                       pg_catalog.pg_encoding_to_char(d.encoding) as encoding,
+                       d.datcollate as collate,d.datctype as ctype,
+                       CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT')
+                            THEN pg_catalog.pg_size_pretty(pg_catalog.pg_database_size(d.datname))
+                            ELSE 'No Access'
+                       END as size 
+                FROM pg_catalog.pg_database d 
+                JOIN pg_catalog.pg_tablespace t on d.dattablespace = t.oid 
+                ORDER BY 1;"
   pgVersion=$($(ps h -o cmd -C postgres |grep "postgres -D" |cut -d' ' -f1) -V |cut -d" " -f3)
   pgbVersion=$(pgbouncer -V 2>/dev/null |cut -d" " -f3)
-  pgDatabases=$($psqlCmd -c "\l+" |awk -F: '{print $1" ("$7", "$3", "$4");"}' |grep -vE 'template|postgres' |xargs echo |sed -e 's/;$/\./g')
+  pgDatabases=$($psqlCmd -c "$pgGetDbQuery" |awk -F: '{print $1" ("$5", "$2", "$3");"}' |grep -vE 'template|postgres' |xargs echo |sed -e 's/;$/\./g')
   pgReplicaCount=$($psqlCmd -c "select count(*) from pg_stat_replication")
   pgRecoveryStatus=$($psqlCmd -c "select pg_is_in_recovery()")
 }
