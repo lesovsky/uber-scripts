@@ -7,6 +7,22 @@ export PATH="/usr/bin:/usr/local/bin:/usr/sbin:/usr/local/sbin:/bin:/sbin"
 
 PARAM="$@"
 
+usage () {
+   echo "${0##*/} usage: "
+   echo "  --print-only=         get server information and print it.
+  --send="conninfo" 	get server information and send it to remote server which specified with conninfo.
+  --help,--usage,-h	print this help.
+
+ conninfo:
+   host=	remote server hostname or ip address, default 127.0.0.1.
+   port=	remote server port, default 5432.
+   user=	remote username, default scrapper.
+   database=	remote database name, default scrapper.
+
+ Example:
+  ${0##*/} --send=\"host=scrapper.example.com port=6432 user=sc_user database=sc_db\""
+ }
+
 getData() {
   cpuModel=$(awk -F: '/^model name/ {print $2; exit}' /proc/cpuinfo)
   cpuCount=$(awk -F: '/^physical id/ { print $2 }' /proc/cpuinfo |sort -u |wc -l)
@@ -102,12 +118,8 @@ main() {
      sendData
   ;;
   --usage|--help|* )
-     echo "${0##*/} usage: 
---print-only	only print data;
---send=a:b:c:d	send data to a remote server with the specified address(a), port(b), database(c) and user(d);
---usage,--help	print this message.
-
-Example:	${0##*/} --send=1.2.3.4:5432:db:user"
+     usage
+  ;;
   esac
 }
 
