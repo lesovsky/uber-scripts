@@ -34,7 +34,7 @@ getData() {
   memData="physical memory: $memTotal; swap: $swapTotal"
 
   # required lspci for pci device_id and vendor_id translation
-  storageData=$(lspci |awk -F: '/storage controller/ || /RAID/ { print $3 }' |xargs echo)
+  storageData=$(lspci |awk -F: '/storage controller/ || /RAID/ || /SCSI/ { print $3 }' |xargs echo)
 
   for disk in $(grep -Ewo '[s,h,v]d[a-z]' /proc/partitions |sort -r |xargs echo); do
     size=$(echo $(($(cat /sys/dev/block/$(grep -w $disk /proc/partitions |awk '{print $1":"$2}')/size) * 512 / 1024 / 1024 / 1024)))
