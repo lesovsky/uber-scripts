@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Description:	some cool descr here...
+# Description:  some cool descr here...
 # params: print only, or send
 
 company="1+1"
@@ -10,19 +10,10 @@ PARAM="$@"
 
 usage () {
    echo "${0##*/} usage: "
-   echo "  --print-only=         get server information and print it.
-  --send="conninfo" 	get server information and send it to remote server which specified with conninfo.
-  --help,--usage,-h	print this help.
-
- conninfo:
-   host=	remote server hostname or ip address, default 127.0.0.1.
-   port=	remote server port, default 5432.
-   user=	remote username, default scrapper.
-   database=	remote database name, default scrapper.
-
- Example:
-  ${0##*/} --send=\"host=scrapper.example.com port=6432 user=sc_user database=sc_db\""
- }
+   echo "  --print-human         get server information and print it in human readable format.
+  --print-sql           get server information and print raw SQL.
+  --help,--usage,-h     print this help."
+}
 
 getData() {
   cpuModel=$(awk -F: '/^model name/ {print $2; exit}' /proc/cpuinfo)
@@ -67,7 +58,7 @@ getData() {
   pgRecoveryStatus=$($psqlCmd -c "select pg_is_in_recovery()")
 }
 
-printData() {
+printHuman() {
   echo "Cpu:               $cpuData
 Memory:            $memData
 Storage:           $storageData
@@ -79,15 +70,9 @@ pgBouncer ver.:    $pgbVersion
 PostgreSQL databases: $pgDatabases"
 }
 
-sendData() {
-  pgDestHost=$(echo $PARAM |grep -oiP "host=[a-z0-9\-\._]+" |cut -d= -f2)
-  pgDestPort=$(echo $PARAM |grep -oiP "port=[a-z0-9\-\._]+" |cut -d= -f2)
-  pgDestDb=$(echo $PARAM |grep -oiP "database=[a-z0-9\-\._]+" |cut -d= -f2)
-  pgDestUser=$(echo $PARAM |grep -oiP "user=[a-z0-9\-\._]+" |cut -d= -f2)
-  pgOpts="-h ${pgDestHost:-127.0.0.1} -p ${pgDestPort:-5432} -U ${pgDestUser:-scrapper}"
-
+printSql() {
   # new send with upsert
-  psql $pgOpts -c "BEGIN;
+  echo "BEGIN;
     WITH upsert AS
     (
       UPDATE servers SET updated_at=now(),is_alive=true WHERE hostname='$hostname' RETURNING *
@@ -115,20 +100,20 @@ sendData() {
     (
       SELECT hostname FROM software WHERE hostname='$hostname'
     );
-    COMMIT;" ${pgDestDb:-scrapper}
+    COMMIT;"
 }
 
 main() {
   case "$PARAM" in
-  --print-only )
+  --print-human )
      getData
-     printData
+     printHuman
   ;;
-  --send=* )
+  --print-sql )
      getData
-     sendData
+     printSql
   ;;
-  --usage|--help|* )
+ --usage|--help|* )
      usage
   ;;
   esac
