@@ -22,7 +22,7 @@ echo "<head>
      <caption><span style="font-weight:bold">$company</span></caption>"
 
   # build server rows
-  serverList=$(psql -qAtX -h ${pgDestHost:-127.0.0.1} -p ${pgDestPort:-5432} -U ${pgDestUser:-scrapper} -c "select c.company,c.hostname,c.updated_at,s.ip,h.cpu,h.memory,h.storage,h.disks,h.network,s.os,s.kernel,s.pg_version,s.pgb_version,s.databases from servers c join hardware h on c.hostname = h.hostname join software s on c.hostname = s.hostname where company = '$company'" ${pgDestDb:-scrapper})
+  serverList=$(psql -qAtX -h ${pgDestHost:-127.0.0.1} -p ${pgDestPort:-5432} -U ${pgDestUser:-scrapper} -c "select c.company,c.hostname,c.updated_at,s.ip,h.cpu,h.memory,h.storage,h.disks,h.network,s.os,s.kernel,s.pg_version,s.pgb_version,s.databases from servers c join hardware h on c.hostname = h.hostname join software s on c.hostname = s.hostname where is_alive = 't' and company = '$company'" ${pgDestDb:-scrapper})
   echo "$serverList" |while read server; do
     SAVEIFS=$IFS ; IFS='|'
     echo "$server" |while read company hostname updated_at ip cpu memory storage disks network os kernel pgversion pgbversion databases; do
