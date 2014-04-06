@@ -1,0 +1,16 @@
+MAILTO=support@example.com
+
+# Description:  Insert data into scrapper database.
+# Add:		--
+# Comment:	Put files with a SQL output from "scrapper-clients --print-sql" into /var/tmp/scrapper.
+14 */1 * * *	for file in $(find /var/tmp/scrapper/ -type f); do psql -qAtX -h 127.0.0.1 -U scrapper -f $file; rm -f $file; done
+
+# Description:	Scrapper builder HTML creation
+# Add:		--
+# Comment:	--
+15 */1 * * *	/usr/bin/scrapper-builder.sh --build="host=127.0.0.1" > /var/www/scrapper/dbinfo.html
+
+# Description:	Mark servers with old updated_at as dead (is_alive = false)
+# Add:		--
+# Comment:	Dead host doesn't account when HTML builds.
+0 0 * * *	psql -qAtX -h 127.0.0.1 -U scrapper -c "update servers set is_alive = 'f' where updated_at < (now() - interval '1 day');"
