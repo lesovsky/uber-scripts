@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/local/bin/bash
 # Description:  some cool descr here...
 # params: print only, or send
 
@@ -25,7 +25,7 @@ getData() {
   memData="physical memory: $memTotal kB; swap: $swapTotal kB"
 
   # required lspci for pci device_id and vendor_id translation
-  storageData=$(pciconf -lv |grep -B3 -E 'subclass.*SCSI' |grep -E 'vendor|device' |awk -F= '{print $2}' |tr -d \' |xargs echo)
+  storageData=$(pciconf -lv |grep -B3 -E 'subclass.*(RAID|SCSI)' |grep -E 'vendor|device' |awk -F= '{print $2}' |tr -d \' |xargs echo)
 
   for disk in $(sysctl -n kern.disks); do
     size=$(gpart show -l $disk 2>/dev/null |head -n 1 |grep -oE '\(.*\)' |tr -d \(\))
