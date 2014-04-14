@@ -54,7 +54,7 @@ getData() {
                 FROM pg_catalog.pg_database d 
                 JOIN pg_catalog.pg_tablespace t on d.dattablespace = t.oid 
                 ORDER BY 1;"
-  pgVersion=$($(ps -U pgsql -U postgres -o command |grep -E "(postgres|postmaster).* -D" |grep -v grep |cut -d' ' -f1) -V |cut -d" " -f3)
+  pgVersion=$($(ps -U pgsql -U postgres -o command |grep -E "(postgres|postmaster).* -D" |grep -v grep |head -n 1 |cut -d' ' -f1) -V |cut -d" " -f3)
   pgbVersion=$(pgbouncer -V 2>/dev/null |cut -d" " -f3)
   pgDatabases=$($psqlCmd -c "$pgGetDbQuery" |awk -F: '{print $1" ("$5", "$2", "$3");"}' |grep -vE 'template|postgres' |xargs echo |sed -e 's/;$/\./g')
   pgReplicaCount=$($psqlCmd -c "select count(*) from pg_stat_replication")
