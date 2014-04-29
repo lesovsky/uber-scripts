@@ -1,0 +1,10 @@
+/var/log/pgbouncer/pgbouncer.log {
+        missingok
+        daily
+        notifempty
+        sharedscripts
+        create 0640 pgbouncer postgres
+        postrotate
+                /etc/init.d/pgbouncer -q reload
+        endscript
+}
