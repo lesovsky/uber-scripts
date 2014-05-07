@@ -3,8 +3,6 @@
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 COMPANY="company"
-CLONEPG_LOCK="/tmp/clonepg.lock"
-VALIDATION_LOCK="/tmp/basebackup-validation.lock"
 PARAMS=$@
 
 trap scriptExit SIGINT SIGTERM
@@ -126,7 +124,7 @@ checkPostgres() {
 
 sendNotify() {
   if [ -z $MAILTO ]; then MAILTO="/dev/null"; fi
-  tail -n 15 $PGLOG |$MAIL -e -s "$PG_STATUS basebackup validation on $COMPANY for $(date +\%d-\%b-\%Y)" $(echo $MAILTO |sed -e "s/,/ /g")
+  tail -n 15 $PGLOG |$MAIL -e -s "$PG_STATUS basebackup validation on $COMPANY for $BACKUP at $(date +\%d-\%b-\%Y)" $(echo $MAILTO |sed -e "s/,/ /g")
 }
 
 stopPostgres() {
@@ -139,6 +137,8 @@ main() {
   SANDBOXDIR=$(getConfig sandbox)
   WALDIR=$(getConfig wal)
   MAILTO=$(getConfig mailto)
+  CLONEPG_LOCK="/tmp/clonepg.lock"
+  VALIDATION_LOCK="/tmp/${BACKUP##*/}-validation.lock"
 
   sanityCheck
   touch $VALIDATION_LOCK 
