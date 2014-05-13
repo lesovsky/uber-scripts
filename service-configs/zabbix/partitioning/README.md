@@ -19,11 +19,10 @@ Source [how-to](https://www.zabbix.org/wiki/Docs/howto/zabbix2_postgresql_partit
    ```
 8. Run manual partition creating for a next day/month.
    ```
-   zabbix-partitioning-init.sql
+   /etc/cron.daily/zabbix-partitioning.sql
    ```
 9. Check partitioned table in "partitions" schema in zabbix database.
    ```
-   psql -U zabbix zabbix
-   psql => \dt+ partitions.*
+   psql -U zabbix zabbix -c "\dt+ partitions.*"
    ```
 10. At the next day check that the next-day partitions created automatically by cron.
