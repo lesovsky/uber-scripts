@@ -23,6 +23,6 @@ Source [how-to](https://www.zabbix.org/wiki/Docs/howto/zabbix2_postgresql_partit
    ```
 9. Check partitioned table in "partitions" schema in zabbix database.
    ```
-   psql -U zabbix zabbix -c "\dt+ partitions.*"
+   psql -U zabbix zabbix_db -c "\dt+ partitions.*"
    ```
 10. At the next day check that the next-day partitions created automatically by cron.
