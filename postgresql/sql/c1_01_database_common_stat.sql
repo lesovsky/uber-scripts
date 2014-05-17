@@ -10,4 +10,4 @@ select
   stats_reset 
 from pg_stat_database 
 order by 
-  numbackends desc;
+  pg_database_size(datname) desc;
