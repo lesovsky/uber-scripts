@@ -65,7 +65,7 @@ function inventoryDisks {
       size=$(gpart show -l $disk 2>/dev/null |head -n 1 |grep -oE '\(.*\)' |tr -d \(\))
       if [[ -n $size ]]
         then diskData="$disk size ${size}, $diskData"
-        else continue
+        else diskData="$disk size unknown, $diskData"
       fi
     done
   diskData=$(echo $diskData |sed -e 's/,$//')
