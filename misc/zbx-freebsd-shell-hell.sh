@@ -76,7 +76,8 @@ function daily() {
 # inventory
   echo "inventory.cpu.count $(sysctl -n hw.ncpu)"
   echo "inventory.cpu.model $(sysctl -n hw.model |xargs echo)"
-  echo "inventory.storage.model $(pciconf -lv |grep -B3 -E 'subclass.*(RAID|SCSI)' |grep -E 'vendor|device' |awk -F= '{print $2}' |tr -d \' |xargs echo)"
+  storageModel=$(pciconf -lv |grep -B3 -E 'subclass.*(RAID|SCSI)' |grep -E 'vendor|device' |awk -F= '{print $2}' |tr -d \' |xargs echo)
+  [[ -n $storageModel ]] && echo "inventory.storage.model $storageModel" || echo "inventory.storage.model Unknown"
   echo -n "inventory.disks "; inventoryDisks
   echo "inventory.os $(uname -rps)"
   echo "inventory.kernel $(uname -i)"
