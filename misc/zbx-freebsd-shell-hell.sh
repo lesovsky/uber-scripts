@@ -104,7 +104,7 @@ sysctl -n vm.loadavg |tr -d {} |while read load1 load5 load15; do
   echo "system.load5 $load5"
   echo "system.load15 $load15"
 done
-top -b -d 2 -s 1 |grep '^CPU:' |tail -n 1 |while read header us tr1 ni tr2 sy tr3 itr tr4 id tr5; do
+top -b -d 2 -s 1 |grep '^CPU:' |tail -n 1 |grep -oE '[0-9\.]+' |xargs echo |while read us ni sy itr id; do
   echo "system.cpu.user $us" |tr -d %
   echo "system.cpu.sys $sy" |tr -d %
   echo "system.cpu.nice $ni" |tr -d %
