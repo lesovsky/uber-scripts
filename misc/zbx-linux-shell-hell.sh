@@ -101,6 +101,7 @@ for i in $pgGucs; do echo pgsql.setting[$i] $(psql -qAtX postgres -c "SELECT cur
 function always() {
 iostatCollect
 for i in $(iostat -d |grep -E '^(xvd|sd|hd|vd)[a-z]' |awk '{print $1}'); do echo -n "disk.util[$i] "; getUtilization $i; done
+echo "system.localtime $(date +%s)"
 while read load1 load5 load15 processes rcreated; do
   echo "system.load1 $load1"
   echo "system.load5 $load5"

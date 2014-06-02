@@ -99,6 +99,7 @@ for i in $pgGucs; do echo pgsql.setting[$i] $(psql -qAtX postgres -c "SELECT cur
 function always() {
 iostatCollect
 for i in $(sysctl -n kern.disks); do echo -n "disk.util[$i] "; getUtilization $i; done
+echo "system.localtime $(date +%s)"
 sysctl -n vm.loadavg |tr -d {} |while read load1 load5 load15; do
   echo "system.load1 $load1"
   echo "system.load5 $load5"
