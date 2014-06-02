@@ -3,7 +3,7 @@
 # Author:       Lesovsky A.V.           Revision:       0.1
 
 export PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
-pgGucs="fsync synchronous_commit full_page_writes"
+pgGucs="fsync synchronous_commit full_page_writes max_connections"
 PARAM=$1
 
 function fsDiscovery {
@@ -118,6 +118,7 @@ fsData
 echo "pgsql.streaming.state $(psql -qAtX postgres -c 'SELECT pg_is_in_recovery()' 2>/dev/null ||echo ZBX_NOTSUPPORTED)"
 echo "pgsql.streaming.count $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_stat_replication' 2>/dev/null ||echo ZBX_NOTSUPPORTED)"
 [[ $(psql -qAtX postgres -c "SELECT client_addr FROM pg_stat_replication" 2>/dev/null) ]] && streamingLag
+echo "pgsql.connections[total] $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_stat_activity' 2>/dev/null ||echo ZBX_NOTSUPPORTED)"
 }
 
 function main() {
