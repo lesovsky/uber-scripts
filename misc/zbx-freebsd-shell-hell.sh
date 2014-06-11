@@ -119,6 +119,8 @@ echo "pgsql.streaming.state $(psql -qAtX postgres -c 'SELECT pg_is_in_recovery()
 echo "pgsql.streaming.count $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_stat_replication' 2>/dev/null ||echo ZBX_NOTSUPPORTED)"
 [[ $(psql -qAtX postgres -c "SELECT client_addr FROM pg_stat_replication" 2>/dev/null) ]] && streamingLag
 echo "pgsql.connections[total] $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_stat_activity' 2>/dev/null ||echo ZBX_NOTSUPPORTED)"
+echo "proc.num[pgbouncer] $(ps x |grep pgbouncer |grep -v grep |wc -l |xargs echo)"
+echo "proc.num[postgres] $(ps x |grep postgres |grep -v grep |wc -l |xargs echo)"
 }
 
 function main() {
