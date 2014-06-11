@@ -19,7 +19,7 @@ function fsData {
     do
       df -k $i |tail -n 1|awk '{print $2" "$3" "$5}' |while read total used pused
         do
-          echo "vfs.fs.size[$i,total] $total"
+          echo "vfs.fs.size[$i,total] $total" 
           echo "vfs.fs.size[$i,used] $used"
           echo "vfs.fs.size[$i,pused] $pused" |tr -d %
         done
@@ -98,18 +98,18 @@ for i in $pgGucs; do echo pgsql.setting[$i] $(psql -qAtX postgres -c "SELECT cur
 
 function always() {
 iostatCollect
-for i in $(sysctl -n kern.disks); do echo -n "disk.util[$i] "; getUtilization $i; done
+for i in $(sysctl -n kern.disks); do echo -n "disk.util[$i] "; getUtilization $i |tr , .; done
 echo "system.localtime $(date +%s)"
 sysctl -n vm.loadavg |tr -d {} |while read load1 load5 load15; do
-  echo "system.load1 $load1"
-  echo "system.load5 $load5"
-  echo "system.load15 $load15"
+  echo "system.load1 $load1" |tr , .
+  echo "system.load5 $load5" |tr , .
+  echo "system.load15 $load15" |tr , .
 done
 top -b -d 2 -s 1 |grep '^CPU:' |tail -n 1 |grep -oE '[0-9\.]+' |xargs echo |while read us ni sy itr id; do
-  echo "system.cpu.user $us" |tr -d %
-  echo "system.cpu.sys $sy" |tr -d %
-  echo "system.cpu.nice $ni" |tr -d %
-  echo "system.cpu.idle $id" |tr -d %
+  echo "system.cpu.user $us" |tr -d % |tr , .
+  echo "system.cpu.sys $sy" |tr -d %  |tr , .
+  echo "system.cpu.nice $ni" |tr -d % |tr , .
+  echo "system.cpu.idle $id" |tr -d % |tr , .
 done
 echo "system.ram.free $(( $(sysctl -n vm.stats.vm.v_free_count) * $(sysctl -n hw.pagesize) ))"
 echo "system.swap.free $(swapinfo -k |tail -1 |awk '{sum += $4} END {print sum * 1024}')"
