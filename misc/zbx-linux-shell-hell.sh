@@ -38,7 +38,7 @@ function streamingLag {
   for i in $(psql -qAtX postgres -c "SELECT client_addr FROM pg_stat_replication");
     do 
       echo -n "pgsql.streaming.lag[$i] "; 
-      $(psql -qAtX postgres -c "select round(pg_xlog_location_diff(sent_location, replay_location) /1024 /1024,3) from pg_stat_replication where client_addr = '$i'")
+      $(psql -qAtX postgres -c "select round(pg_xlog_location_diff(sent_location, replay_location) /1024 /1024,3) from pg_stat_replication where client_addr = '$i'") || echo ZBX_NOTSUPPORTED
     done
 }
 
@@ -120,7 +120,7 @@ fsData
 # postgres
 echo "pgsql.streaming.state $(psql -qAtX postgres -c 'SELECT pg_is_in_recovery()')"
 echo "pgsql.streaming.count $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_stat_replication')"
-[[ $(psql -qAtX postgres -c "SELECT client_addr FROM pg_stat_replication" 2>/dev/null) ]] && streamingLag 2>/dev/null ||echo ZBX_NOTSUPPORTED
+[[ $(psql -qAtX postgres -c "SELECT client_addr FROM pg_stat_replication" 2>/dev/null) ]] && streamingLag 2>/dev/null
 echo "pgsql.connections[total] $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_stat_activity' 2>/dev/null ||echo ZBX_NOTSUPPORTED)"
 }
 
