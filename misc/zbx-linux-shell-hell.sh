@@ -44,7 +44,7 @@ function streamingLag {
 
 function iostatDiscovery() {
   echo -n '{"data":['
-    for i in $(iostat -d |grep -E '^(xvd|sd|hd|vd)[a-z]' |awk '{print $1}'); do echo -n "{\"{#HARDDISK}\": \"$i\"},"; done |sed -e 's:\},$:\}:'
+    for i in $(iostat -d |grep -w -E '^(xvd|sd|hd|vd)[a-z]' |awk '{print $1}'); do echo -n "{\"{#HARDDISK}\": \"$i\"},"; done |sed -e 's:\},$:\}:'
   echo ']}'
 }
 
@@ -54,6 +54,8 @@ function iostatCollect() {
 }
 
 function getUtilization() {
+# older versions of iostat have other set of fields
+#  grep -w $1 /tmp/iostat.tmp | tail -n +2 | tr -s ' ' |awk -v N=12 'BEGIN {sum=0.0;count=0;} {sum=sum+$N;count=count+1;} END {printf("%.2f\n", sum/count);}'
   grep -w $1 /tmp/iostat.tmp | tail -n +2 | tr -s ' ' |awk -v N=14 'BEGIN {sum=0.0;count=0;} {sum=sum+$N;count=count+1;} END {printf("%.2f\n", sum/count);}'
 }
 
