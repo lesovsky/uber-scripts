@@ -107,7 +107,7 @@ while read load1 load5 load15 processes rcreated; do
   echo "system.load5 $load5"
   echo "system.load15 $load15"
 done < /proc/loadavg
-top -b -n 2 -d 0.2 |grep -E '(%)?Cpu' |tail -n 1 |sed -e 's:%: :g' |grep -oE '[0-9\.]+' |xargs echo |while read us sy ni id wa hi si st; do
+top -b -n 2 -d 0.2 |grep -E '^(%)?Cpu' |tail -n 1 |sed -e 's:%: :g' |grep -oE '[0-9\.]+' |xargs echo |while read us sy ni id wa hi si st; do
   echo "system.cpu.user $us"
   echo "system.cpu.sys $sy"
   echo "system.cpu.nice $ni"
