@@ -123,7 +123,7 @@ echo "pgsql.streaming.count $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_st
 [[ $(psql -qAtX postgres -c "SELECT client_addr FROM pg_stat_replication" 2>/dev/null) ]] && streamingLag 2>/dev/null
 echo "pgsql.connections[total] $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_stat_activity' 2>/dev/null ||echo ZBX_NOTSUPPORTED)"
 echo "proc.num[pgbouncer] $(ps h -C pgbouncer |wc -l |xargs echo)"
-echo "proc.num[postgres] $(ps h -C postgres |wc -l |xargs echo)"
+echo "proc.num[postgres] $(ps h -C postgres -C postmaster |wc -l |xargs echo)"
 }
 
 function main() {
