@@ -76,10 +76,10 @@ function daily() {
   echo "inventory.cpu.model $(awk -F: '/^model name/ {print $2; exit}' /proc/cpuinfo)"
   echo "inventory.storage.model $(lspci |awk -F: '/storage controller/ || /RAID/ || /SCSI/ { print $3 }' |xargs echo)"
   echo -n "inventory.disks "; inventoryDisks
-  echo "inventory.os $(lsb_release -d 2>/dev/null |awk -F: '{print $2}' |xargs echo ||echo unknown)"
+  echo -n "inventory.os "; [[ $(lsb_release -d 2>/dev/null |awk -F: '{print $2}' |xargs echo) ]] ||echo unknown
   echo "inventory.kernel $(uname -sr)"
   echo "inventory.hostname $(uname -n)"
-  echo "inventory.pkg.pgbouncer $(pgbouncer -V 2>/dev/null |cut -d" " -f3)"
+  echo -n "inventory.pkg.pgbouncer "; [[ $(pgbouncer -V 2>/dev/null |cut -d" " -f3)" ]] || echo not installed
   echo "inventory.pkg.postgresql $($(ps h -o cmd -C postgres -C postmaster |grep -E "(postgres|postmaster).* -D" |cut -d' ' -f1) -V |cut -d" " -f3)"
 # system
   echo "system.ram.total $(grep -m 1 MemTotal: /proc/meminfo |awk '{ printf "%.0f\n", $2 * 1024 }')"
