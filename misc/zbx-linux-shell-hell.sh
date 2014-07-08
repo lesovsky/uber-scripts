@@ -18,7 +18,7 @@ function fsDiscovery {
 function fsData {
   for i in $(grep -w -E 'ext(3|4)|reiserfs|xfs' /proc/mounts |awk '{print $2}')
     do
-      df $i |tail -n 1|awk '{print $2" "$3" "$5}' |while read total used pused
+      df $i 2>/dev/null |tail -n 1|awk '{print $2" "$3" "$5}' |while read total used pused
         do
           echo "vfs.fs.size[$i,total] $total"
           echo "vfs.fs.size[$i,used] $used"
