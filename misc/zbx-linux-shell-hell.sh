@@ -79,7 +79,7 @@ function daily() {
   echo -n "inventory.os "; [[ $(lsb_release -d 2>/dev/null |awk -F: '{print $2}' |xargs echo) ]] ||echo unknown
   echo "inventory.kernel $(uname -sr)"
   echo "inventory.hostname $(uname -n)"
-  echo -n "inventory.pkg.pgbouncer "; [[ $(pgbouncer -V 2>/dev/null |cut -d" " -f3) ]] || echo not installed
+  echo -n "inventory.pkg.pgbouncer "; [[ $(which pgbouncer 2>/dev/null) ]] && pgbouncer -V |cut -d" " -f3 || echo not installed
   echo "inventory.pkg.postgresql $($(ps h -o cmd -C postgres -C postmaster |grep -E "(postgres|postmaster).* -D" |cut -d' ' -f1) -V |cut -d" " -f3)"
 # system
   echo "system.ram.total $(grep -m 1 MemTotal: /proc/meminfo |awk '{ printf "%.0f\n", $2 * 1024 }')"
