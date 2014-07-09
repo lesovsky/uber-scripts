@@ -76,7 +76,7 @@ function daily() {
   echo "inventory.cpu.model $(awk -F: '/^model name/ {print $2; exit}' /proc/cpuinfo)"
   echo "inventory.storage.model $(lspci |awk -F: '/storage controller/ || /RAID/ || /SCSI/ { print $3 }' |xargs echo)"
   echo -n "inventory.disks "; inventoryDisks
-  echo -n "inventory.os "; [[ $(lsb_release -d 2>/dev/null |awk -F: '{print $2}' |xargs echo) ]] ||echo unknown
+  echo -n "inventory.os "; [[ $(which lsb_release 2>/dev/null) ]] && lsb_release -d |awk -F: '{print $2}' |xargs echo ||echo unknown
   echo "inventory.kernel $(uname -sr)"
   echo "inventory.hostname $(uname -n)"
   echo -n "inventory.pkg.pgbouncer "; [[ $(which pgbouncer 2>/dev/null) ]] && pgbouncer -V |cut -d" " -f3 || echo not installed
