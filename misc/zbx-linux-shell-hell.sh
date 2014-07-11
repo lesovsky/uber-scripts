@@ -67,14 +67,15 @@ function inventoryDisks {
       diskData="$disk size ${size}GiB, $diskData"
     done;
   diskData=$(echo $diskData |sed -e 's/,$//')
-  echo $diskData
+  if [[ -n $diskData ]]; then echo $diskData; else echo unknown; fi  
 }
 
 function daily() {
 # inventory
   echo "inventory.cpu.count $(awk -F: '/^physical id/ { print $2 }' /proc/cpuinfo |sort -u |wc -l)"
   echo "inventory.cpu.model $(awk -F: '/^model name/ {print $2; exit}' /proc/cpuinfo)"
-  echo "inventory.storage.model $(lspci |awk -F: '/storage controller/ || /RAID/ || /SCSI/ { print $3 }' |xargs echo)"
+  echo -n "inventory.storage.model "; [[ $(lspci 2>/dev/null) ]] && lspci |awk -F: '/storage controller/ || /RAID/ || /SCSI/ { print $3 }' |xargs echo || echo unknown
+echo "inventory.storage.model $(lspci |awk -F: '/storage controller/ || /RAID/ || /SCSI/ { print $3 }' |xargs echo)"
   echo -n "inventory.disks "; inventoryDisks
   echo -n "inventory.os "; [[ $(which lsb_release 2>/dev/null) ]] && lsb_release -d |awk -F: '{print $2}' |xargs echo ||echo unknown
   echo "inventory.kernel $(uname -sr)"
