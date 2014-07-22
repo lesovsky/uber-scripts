@@ -134,6 +134,7 @@ case $PARAM in
 'daily' ) daily ;;
 'hourly' ) hourly ;;
 'always' ) always ;;
+* ) echo "unknown param, use daily, hourly or always param" ;;
 esac
 }
 
