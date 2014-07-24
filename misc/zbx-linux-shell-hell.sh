@@ -49,7 +49,7 @@ function iostatDiscovery() {
 }
 
 function iostatCollect() {
-  DISK=$(iostat -x 1 5 | awk 'BEGIN {check=0;} {if(check==1 && $1=="avg-cpu:"){check=0}if(check==1 && $1!=""){print $0}if($1=="Device:"){check=1}}' | tr '\n' '|')
+  DISK=$(iostat -x 1 10 | awk 'BEGIN {check=0;} {if(check==1 && $1=="avg-cpu:"){check=0}if(check==1 && $1!=""){print $0}if($1=="Device:"){check=1}}' | tr '\n' '|')
   echo $DISK | sed 's/|/\n/g' > /tmp/iostat.tmp
 }
 
