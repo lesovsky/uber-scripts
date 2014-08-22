@@ -38,7 +38,7 @@ function streamingLag {
   for i in $(psql -qAtX postgres -c "SELECT client_addr FROM pg_stat_replication");
     do 
       echo -n "pgsql.streaming.lag[$i] "; 
-      echo $(psql -qAtX postgres -c "select round(pg_xlog_location_diff(sent_location, replay_location) /1024 /1024,3) from pg_stat_replication where client_addr = '$i'" || echo ZBX_NOTSUPPORTED)
+      echo $(psql -qAtX postgres -c "select pg_xlog_location_diff(sent_location, replay_location) from pg_stat_replication where client_addr = '$i'" || echo ZBX_NOTSUPPORTED)
     done
 }
 
