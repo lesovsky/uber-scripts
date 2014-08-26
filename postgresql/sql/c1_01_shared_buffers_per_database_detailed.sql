@@ -1,5 +1,6 @@
 SELECT
   c.relname,
+  pg_size_pretty(pg_relation_size(c.relname::regclass)),
   pg_size_pretty(count(b.bufferid) * 8192) AS size_in_shared_buffers,
   round((100 * count(b.bufferid) / (SELECT setting FROM pg_settings WHERE name = 'shared_buffers')::decimal),2) AS pct_of_shared_buffers
 FROM pg_buffercache b
