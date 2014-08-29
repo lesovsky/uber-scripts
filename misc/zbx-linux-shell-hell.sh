@@ -37,8 +37,16 @@ function streamingDiscovery {
 function streamingLag {
   for i in $(psql -qAtX postgres -c "SELECT client_addr FROM pg_stat_replication");
     do 
-      echo -n "pgsql.streaming.lag[$i] "; 
+      echo -n "pgsql.streaming.lag[$i] ";
       echo $(psql -qAtX postgres -c "select pg_xlog_location_diff(sent_location, replay_location) from pg_stat_replication where client_addr = '$i'" || echo ZBX_NOTSUPPORTED)
+    done
+}
+
+function streamingPacketLoss {
+  for i in $(psql -qAtX postgres -c "SELECT client_addr FROM pg_stat_replication");
+    do 
+      echo -n "icmppingloss[$i] ";
+      echo $(ping -q -c 10 -i 0.2 $i |grep 'packet loss' |awk '{print $6}' |tr -d % || echo ZBX_NOTSUPPORTED)
     done
 }
 
@@ -123,6 +131,7 @@ fsData
 echo "pgsql.streaming.state $(psql -qAtX postgres -c 'SELECT pg_is_in_recovery()')"
 echo "pgsql.streaming.count $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_stat_replication')"
 [[ $(psql -qAtX postgres -c "SELECT client_addr FROM pg_stat_replication" 2>/dev/null) ]] && streamingLag 2>/dev/null
+[[ $(psql -qAtX postgres -c "SELECT client_addr FROM pg_stat_replication" 2>/dev/null) ]] && streamingPacketLoss 2>/dev/null
 echo "pgsql.connections[total] $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_stat_activity' 2>/dev/null ||echo ZBX_NOTSUPPORTED)"
 echo "proc.num[pgbouncer] $(ps h -C pgbouncer |wc -l |xargs echo)"
 echo "proc.num[postgres] $(ps h -C postgres -C postmaster |wc -l |xargs echo)"
