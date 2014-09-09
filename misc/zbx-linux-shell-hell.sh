@@ -8,7 +8,7 @@ PARAM=$1
 
 function fsDiscovery {
   echo -n '{"data":['
-  grep -w -E 'ext(3|4)|reiserfs|xfs|rootfs' /proc/mounts |awk '{print $2" "$3}' |while read fsname fstype
+  grep -w -E 'ext(3|4)|reiserfs|xfs' /proc/mounts |awk '{print $2" "$3}' |while read fsname fstype
     do
       echo -n "{\"{#FSNAME}\":\"$fsname\", \"{#FSTYPE}\":\"$fstype\"},"
     done |sed -e 's:\},$:\}:'
@@ -16,7 +16,7 @@ function fsDiscovery {
 }
 
 function fsData {
-  for i in $(grep -w -E 'ext(3|4)|reiserfs|xfs|rootfs' /proc/mounts |awk '{print $2}')
+  for i in $(grep -w -E 'ext(3|4)|reiserfs|xfs' /proc/mounts |awk '{print $2}')
     do
       df -P $i 2>/dev/null |tail -n 1|awk '{print $2" "$3" "$5}' |while read total used pused
         do
