@@ -72,7 +72,7 @@ function iostatCollect() {
 function getUtilization() {
   iostat -V &>/tmp/iostat.version
   iostatVersion=$(grep -oE '[0-9\.]+' /tmp/iostat.version |tr -d .)
-  if [[ $iostatVersion -le 911 ]]; then utilField=12; else utilFiled=14; fi
+  if [[ $iostatVersion -le 911 ]]; then utilField=12; else utilField=14; fi
   grep -w $1 /tmp/iostat.tmp | tail -n +2 | tr -s ' ' |awk -v N=$utilField 'BEGIN {sum=0.0;count=0;} {sum=sum+$N;count=count+1;} END {printf("%.2f\n", sum/count);}'
   rm /tmp/iostat.version
 }
