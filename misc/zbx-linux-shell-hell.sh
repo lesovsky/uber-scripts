@@ -145,6 +145,8 @@ echo "pgsql.streaming.count $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_st
 [[ $(psql -qAtX postgres -c "SELECT client_addr FROM pg_stat_replication" 2>/dev/null) ]] && streamingPacketLoss 2>/dev/null
 echo "pgsql.connections[total] $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_stat_activity' 2>/dev/null ||echo ZBX_NOTSUPPORTED)"
 echo "pgsql.connections[maxtime] $(psql -qAtX postgres -c "select coalesce(extract(epoch from max(age(now(), query_start))), 0) from pg_stat_activity where state <> 'idle' and query not like '%autovacuum%'")"
+# 9.1 and older
+# echo "pgsql.connections[maxtime] $(psql -qAtX postgres -c "select coalesce(extract(epoch from max(age(now(), query_start))), 0) from pg_stat_activity where current_query not like '%autovacuum%' and current_query not like '%IDLE%'")"
 echo "proc.num[pgbouncer] $(ps h -C pgbouncer |wc -l |xargs echo)"
 echo "proc.num[postgres] $(ps h -C postgres -C postmaster |wc -l |xargs echo)"
 }
