@@ -1,7 +1,7 @@
 -- requires pgfincore
 WITH qq AS (SELECT
   c.oid,
-  count(b.bufferid) * 8192 AS size_in_shared_buffers,
+  count(b.bufferid) * (SELECT current_setting('block_size')::int) AS size_in_shared_buffers,
   (select sum(pages_mem) * 4096 from pgfincore(c.oid::regclass)) as size_in_pagecache
 FROM pg_buffercache b
 INNER JOIN pg_class c ON b.relfilenode = pg_relation_filenode(c.oid)
