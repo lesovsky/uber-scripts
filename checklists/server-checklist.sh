@@ -49,3 +49,9 @@ if [[ $(lsmod |grep edac) ]]
   else
     echo "   edac modules not loaded"
 fi
+
+echo "=== CPU Governor ==="
+for i in $(ls -1 /sys/devices/system/cpu/ | grep -oE 'cpu[0-9]+'); 
+do 
+  echo -n "   $i: "; cat /sys/devices/system/cpu/$i/cpufreq/scaling_governor;
+done;
