@@ -1,0 +1,5 @@
+Pgbench benchmark scripts (draft)
+
+1. create tables
+2. run pgbench
+3. truncate or remove tables

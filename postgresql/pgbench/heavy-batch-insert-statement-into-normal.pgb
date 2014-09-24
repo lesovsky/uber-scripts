@@ -1,0 +1,3 @@
+-- heavy case, perform batch inserts without transaction into normal table
+\set batch :scale
+INSERT INTO pgbench_inserts_normal (name, price, weight, size, color, updated_at, built, avail) SELECT md5(random()::text)::char(10) AS name, (random()*1000)::numeric(10,2) AS price, (random() * 5500.63 + 1000.12)::real AS weight, (random() * 21 + 22)::int AS size, (array['green','blue','yellow','black','white','red'])[ceil(random()*6)]::varchar(20) AS color, CURRENT_TIMESTAMP AS updated_at, (now() - interval '2 year' + interval '1 year' * random())::date AS built, random()::int::bool AS avail FROM generate_series(1,:scale) AS gs(id);
