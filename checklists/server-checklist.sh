@@ -21,6 +21,12 @@ echo "=== sysctl: virtual memory ===
 echo "=== sysctl: numa related ===
    $(sysctl vm.zone_reclaim_mode)"
 
+# Files limits check
+echo "=== sysctl: files limits ===
+   $(sysctl fs.file-max)                        # maximum number of open files
+   $(sysctl fs.inotify.max_user_watches)        # maximum inotify watches per user
+   open files limit (ulimit -n): $(ulimit -n)          # maximum number of open files per process"
+
 # Transparent Hugepages check
 echo "=== sysfs: transparent hugepages ===
    /sys/kernel/mm/transparent_hugepage/enabled: $(cat /sys/kernel/mm/transparent_hugepage/enabled)
