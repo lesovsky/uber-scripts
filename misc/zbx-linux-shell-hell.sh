@@ -77,6 +77,11 @@ function getUtilization() {
   rm /tmp/iostat.version
 }
 
+function inventoryStorage {
+  [[ $(lspci 2>/dev/null) ]] && model=$(lspci |awk -F: '/storage controller/ || /RAID/ || /SCSI/ { print $3 }' |xargs echo)
+  [[ -z $model ]] && echo unknown || echo $model
+}
+
 function inventoryDisks {
   local diskData
   for disk in $(grep -Ewo '[s,h,v]d[a-z]|c[0-9]d[0-9]' /proc/partitions |sort -r |xargs echo); 
@@ -92,7 +97,7 @@ function daily() {
 # inventory
   echo "inventory.cpu.count $(awk -F: '/^physical id/ { print $2 }' /proc/cpuinfo |sort -u |wc -l)"
   echo "inventory.cpu.model $(awk -F: '/^model name/ {print $2; exit}' /proc/cpuinfo)"
-  echo -n "inventory.storage.model "; [[ $(lspci 2>/dev/null) ]] && lspci |awk -F: '/storage controller/ || /RAID/ || /SCSI/ { print $3 }' |xargs echo || echo unknown
+  echo -n "inventory.storage.model "; inventoryStorage
   echo -n "inventory.disks "; inventoryDisks
   echo -n "inventory.os "; [[ $(which lsb_release 2>/dev/null) ]] && lsb_release -d |awk -F: '{print $2}' |xargs echo ||echo unknown
   echo "inventory.kernel $(uname -sr)"
