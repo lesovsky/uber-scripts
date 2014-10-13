@@ -130,6 +130,9 @@ echo "pgsql.streaming.count $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_st
 echo "pgsql.connections[total] $(psql -qAtX postgres -c 'SELECT count(*) FROM pg_stat_activity' 2>/dev/null ||echo ZBX_NOTSUPPORTED)"
 echo "proc.num[pgbouncer] $(ps ax |grep pgbouncer |grep -v grep |wc -l |xargs echo)"
 echo "proc.num[postgres] $(ps x |grep postgres |grep -v grep |wc -l |xargs echo)"
+echo "pgsql.connections[maxtime] $(psql -qAtX postgres -c "select coalesce(extract(epoch from max(age(now(), query_start))), 0) from pg_stat_activity where state <> 'idle' and query not like '%autovacuum%'")"
+# 9.1 and older
+# echo "pgsql.connections[maxtime] $(psql -qAtX postgres -c "select coalesce(extract(epoch from max(age(now(), query_start))), 0) from pg_stat_activity where current_query not like '%autovacuum%' and current_query not like '%IDLE%'")"
 }
 
 function main() {
