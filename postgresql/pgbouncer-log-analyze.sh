@@ -3,8 +3,8 @@
 # Version:        0.1
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
-DATE=$(date +%Y-%m-%d)
 LOG=$1
+DATE=${2:-$(date +%Y-%m-%d)}
 TMP=$(mktemp --tmpdir=/tmp pgb.XXXX)
 
 main() {
