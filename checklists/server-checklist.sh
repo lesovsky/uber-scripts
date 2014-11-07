@@ -25,7 +25,8 @@ echo "=== sysctl: numa related ===
 echo "=== sysctl: files limits ===
    $(sysctl fs.file-max)                        # maximum number of open files
    $(sysctl fs.inotify.max_user_watches)        # maximum inotify watches per user
-   open files limit (ulimit -n): $(ulimit -n)          # maximum number of open files per process"
+   open files limit (ulimit -n): $(ulimit -n)          # maximum number of open files per process
+   available port range: $(sysctl net.ipv4.ip_local_port_range)"
 
 # Transparent Hugepages check
 echo "=== sysfs: transparent hugepages ===
