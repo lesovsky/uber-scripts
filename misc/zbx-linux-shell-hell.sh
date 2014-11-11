@@ -103,7 +103,7 @@ function daily() {
   echo "inventory.kernel $(uname -sr)"
   echo "inventory.hostname $(uname -n)"
   echo -n "inventory.pkg.pgbouncer "; [[ $(which pgbouncer 2>/dev/null) ]] && pgbouncer -V |cut -d" " -f3 || echo not installed
-  echo "inventory.pkg.postgresql $($(ps h -o cmd -C postgres -C postmaster |grep -E "(postgres|postmaster).* -D" |cut -d' ' -f1) -V |cut -d" " -f3)"
+  echo "inventory.pkg.postgresql $($(ps h -o cmd -C postgres -C postmaster |grep -E "(postgres|postmaster).* -D" |cut -d' ' -f1 |head -n 1) -V |cut -d" " -f3)"
 # system
   echo "system.ram.total $(grep -m 1 MemTotal: /proc/meminfo |awk '{ printf "%.0f\n", $2 * 1024 }')"
   echo "system.swap.total $(grep -m 1 SwapTotal: /proc/meminfo |awk '{ printf "%.0f\n", $2 * 1024 }')"

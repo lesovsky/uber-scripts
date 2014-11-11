@@ -91,7 +91,7 @@ function daily() {
   echo "inventory.kernel $(uname -i)"
   echo "inventory.hostname $(uname -n)"
   echo "inventory.pkg.pgbouncer $(pgbouncer -V 2>/dev/null |cut -d" " -f3)"
-  echo "inventory.pkg.postgresql $($(ps -U pgsql -U pgsql -o command |grep -E "(postgres|postmaster).* -D" |grep -v grep |head -n 1 |cut -d' ' -f1) -V |cut -d" " -f3)"
+  echo "inventory.pkg.postgresql $($(ps -U pgsql -U pgsql -o command |grep -E "(postgres|postmaster).* -D" |grep -v grep |cut -d' ' -f1 |head -n 1) -V |cut -d" " -f3)"
 # system
   echo "system.ram.total $(sysctl -n hw.physmem)"
   echo "system.swap.total $(swapinfo -k |tail -1 |awk '{sum += $2} END {print sum * 1024}')"
