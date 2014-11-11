@@ -58,7 +58,8 @@ if [[ $(lsmod |grep edac) ]]
 fi
 
 echo "=== CPU Governor ==="
+echo "   current kernel version: $(uname -r)"
 for i in $(ls -1 /sys/devices/system/cpu/ | grep -oE 'cpu[0-9]+'); 
 do 
-  echo -n "   $i: "; cat /sys/devices/system/cpu/$i/cpufreq/scaling_governor;
+  echo "   $i: $(cat /sys/devices/system/cpu/$i/cpufreq/scaling_governor) (driver: $(cat /sys/devices/system/cpu/$i/cpufreq/scaling_driver))";
 done;
