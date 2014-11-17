@@ -70,13 +70,19 @@ if [[ $(lsmod |grep edac) ]]
     echo "edac modules not loaded"
 fi
 
-# CPU Governor info
-echo "${yellow}=== CPU Governor ===${reset}
-current kernel version: $(uname -r)"
-for i in $(ls -1 /sys/devices/system/cpu/ | grep -oE 'cpu[0-9]+'); 
-do 
-  echo "$i: $(cat /sys/devices/system/cpu/$i/cpufreq/scaling_governor) (driver: $(cat /sys/devices/system/cpu/$i/cpufreq/scaling_driver))";
-done | awk '!(NR%2){print p "\t\t\t" $0}{p=$0}'
+# CPU Governor
+echo "${yellow}=== CPU Governor ===${reset}"
+if [ -d /sys/devices/system/cpu/cpu0/cpufreq/ ]
+  then
+    echo "current kernel version: $(uname -r)"
+    for i in $(ls -1 /sys/devices/system/cpu/ | grep -oE 'cpu[0-9]+');
+      do
+        echo "$i: $(cat /sys/devices/system/cpu/$i/cpufreq/scaling_governor) (driver: $(cat /sys/devices/system/cpu/$i/cpufreq/scaling_driver))";
+      done | awk '!(NR%2){print p "\t\t\t" $0}{p=$0}'
+    else
+      echo "cpufreq directory not found, invoke lscpu: "
+      lscpu |grep -E '^(Model|Vendor|CPU( min| max)? MHz)'
+fi
 
 # Mounted filesystems
 echo "${yellow}=== Mounted filesystems ===${reset}"
