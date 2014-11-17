@@ -48,6 +48,14 @@ if which ntpd &>/dev/null
     fi
   else echo "Ntpd not found."
 fi
+
+# Pgbouncer open file limit
+echo "${yellow}=== Pgbouncer info ===${reset}"
+if pgrep pgbouncer &>/dev/null
+  then echo "pgbouncer open files limit: $(awk '/Max open files/{print "soft: " $4 " hard: " $5}' /proc/$(pgrep pgbouncer)/limits)"
+  else echo "pgbouncer not running"
+fi
+
 echo "${yellow}=== Clocksource: available and current clocksource ===${reset}
 /sys/devices/system/clocksource/clocksource0/available_clocksource: $(cat /sys/devices/system/clocksource/clocksource0/available_clocksource)
 /sys/devices/system/clocksource/clocksource0/current_clocksource: $(cat /sys/devices/system/clocksource/clocksource0/current_clocksource)"
