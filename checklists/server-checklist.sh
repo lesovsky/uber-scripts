@@ -14,9 +14,7 @@ $(grep -E "^(Mem|Swap)Total:" /proc/meminfo)"
 
 # Virtual Memory checks
 echo "${yellow}=== sysctl: virtual memory ===${reset}
-$(sysctl -a --pattern 'vm.dirty.*(ratio|bytes)')
-$(sysctl vm.swappiness)
-$(sysctl -a --pattern 'vm.overcommit_(memory|ratio)')"
+$(sysctl vm.dirty_background_bytes vm.dirty_bytes vm.dirty_background_ratio vm.dirty_ratio vm.swappiness vm.overcommit_memory vm.overcommit_ratio)"
 
 # NUMA checks
 echo "${yellow}=== sysctl: numa related ===${reset}
@@ -24,7 +22,7 @@ $(sysctl vm.zone_reclaim_mode)"
 
 # CPU Scheduler check
 echo "${yellow}=== sysctl: cpu scheduler ===${reset}
-$(sysctl -a --pattern 'kernel.sched_(migration_cost|autogroup_enabled)')"
+$(sysctl -e kernel.sched_migration_cost_ns kernel.sched_migration_cost kernel.sched_autogroup_enabled)"
 
 # Files limits check
 echo "${yellow}=== sysctl: files limits ===${reset}
