@@ -18,7 +18,8 @@ $(sysctl vm.dirty_background_bytes vm.dirty_bytes vm.dirty_background_ratio vm.d
 
 # NUMA checks
 echo "${yellow}=== sysctl: numa related ===${reset}
-$(sysctl vm.zone_reclaim_mode)"
+$(sysctl vm.zone_reclaim_mode)
+$(sysctl kernel.numa_balancing)"
 
 # CPU Scheduler check
 echo "${yellow}=== sysctl: cpu scheduler ===${reset}
