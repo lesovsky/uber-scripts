@@ -14,12 +14,13 @@ $(grep -E "^(Mem|Swap)Total:" /proc/meminfo)"
 
 # Virtual Memory checks
 echo "${yellow}=== sysctl: virtual memory ===${reset}
-$(sysctl vm.dirty_background_bytes vm.dirty_bytes vm.dirty_background_ratio vm.dirty_ratio vm.swappiness vm.overcommit_memory vm.overcommit_ratio)"
+$(sysctl -e vm.dirty_background_bytes vm.dirty_bytes vm.dirty_background_ratio vm.dirty_ratio vm.swappiness vm.overcommit_memory vm.overcommit_ratio)"
 
 # NUMA checks
 echo "${yellow}=== sysctl: numa related ===${reset}
-$(sysctl vm.zone_reclaim_mode)
-$(sysctl kernel.numa_balancing)"
+available: $(ls -1d /sys/devices/system/node/node* |wc -l) nodes
+$(sysctl -e vm.zone_reclaim_mode)
+$(sysctl -e kernel.numa_balancing)"
 
 # CPU Scheduler check
 echo "${yellow}=== sysctl: cpu scheduler ===${reset}
@@ -27,10 +28,10 @@ $(sysctl -e kernel.sched_migration_cost_ns kernel.sched_migration_cost kernel.sc
 
 # Files limits check
 echo "${yellow}=== sysctl: files limits ===${reset}
-$(sysctl fs.file-max)                        # maximum number of open files
-$(sysctl fs.inotify.max_user_watches)        # maximum inotify watches per user
+$(sysctl -e fs.file-max)                        # maximum number of open files
+$(sysctl -e fs.inotify.max_user_watches)        # maximum inotify watches per user
 open files limit (ulimit -n): $(ulimit -n)          # maximum number of open files per process
-available port range: $(sysctl net.ipv4.ip_local_port_range)"
+available port range: $(sysctl -e net.ipv4.ip_local_port_range)"
 
 # Transparent Hugepages check
 echo "${yellow}=== sysfs: transparent hugepages ===${reset}
