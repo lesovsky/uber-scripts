@@ -16,7 +16,7 @@ intervalEnd=$(echo $interval |cut -d- -f2)
 
 sed -n -e "/^$date $intervalStart/,/^$date $intervalEnd/p" $inputLog > $outputLog
 
-head -n1 $outputLog |grep -qE "^$date $intervalStart" ||echo "WARNING: first line of $outputLog does not math to start interval"
-tail -n1 $outputLog |grep -qE "^$date $intervalEnd" || echo "WARNING: last line of $outputLog does not mast to end interval"
+head -n1 $outputLog |grep -qE "^$date $intervalStart" ||echo "WARNING: first line of $outputLog does not match to start interval"
+tail -n1 $outputLog |grep -qE "^$date $intervalEnd" || echo "WARNING: last line of $outputLog does not match to end interval"
 
 echo "cut from $inputLog to $outputLog interval from $date $intervalStart to $date $intervalEnd hours"
