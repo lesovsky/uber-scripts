@@ -21,6 +21,7 @@ sysctl -e vm.zone_reclaim_mode kernel.numa_balancing
 echo "${yellow}Tuning target: Huge pages${reset}"
 echo "/sys/kernel/mm/transparent_hugepage/enabled: $(cat /sys/kernel/mm/transparent_hugepage/enabled)
 /sys/kernel/mm/transparent_hugepage/defrag: $(cat /sys/kernel/mm/transparent_hugepage/defrag)"
+sysctl -e vm.hugetlb_shm_group vm.hugepages_treat_as_movable vm.nr_hugepages vm.nr_overcommit_hugepages
 
 echo "${yellow}Tuning target: File systems${reset}"
 mount |grep -w -E 'ext(3|4)|reiserfs|xfs|rootfs' |column -t
