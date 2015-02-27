@@ -42,7 +42,7 @@ if [ -d /sys/block/ ]
 fi
 
 echo "${yellow}Tuning target: Networking${reset}"
-sysctl -e net.ipv4.ip_local_port_range
+sysctl -e net.ipv4.ip_local_port_range net.core.busy_poll net.core.busy_read net.ipv4.tcp_fastopen
 
 echo "${yellow}Tuning target: OS limits${reset}"
 sysctl -e fs.file-max fs.inotify.max_user_watches
