@@ -16,3 +16,15 @@ MegaCli ldinfo lall aall |grep -E '(Virtual Drive|RAID Level|Cache Policy|Access
 megacli ldsetprop WB RA DisDskCache NoCachedBadBBU lall aall    # set WriteBack, Adaptive ReadAhead, disable Disk Cache, Disable Cache when bad BBU
 
 megacli adpfwflash -f filename aN       # flash adapter firmware from image
+
+megacli phyerrorcounters aN             # get error counters for physical media
+
+MegaCli -AdpEventLog -GetEventLogInfo -aN|-a0,1,2|-aALL 
+MegaCli -AdpEventLog -GetEvents {-info -warning -critical -fatal} {-f <fileName>} -aN|-a0,1,2|-aALL 
+MegaCli -AdpEventLog -GetSinceShutdown {-info -warning -critical -fatal} {-f <fileName>} -aN|-a0,1,2|-aALL 
+MegaCli -AdpEventLog -GetSinceReboot {-info -warning -critical -fatal} {-f <fileName>} -aN|-a0,1,2|-aALL 
+MegaCli -AdpEventLog -IncludeDeleted {-info -warning -critical -fatal} {-f <fileName>} -aN|-a0,1,2|-aALL 
+MegaCli -AdpEventLog -GetLatest n {-info -warning -critical -fatal} {-f <fileName>} -aN|-a0,1,2|-aALL 
+MegaCli -AdpEventLog -GetCCIncon -f <fileName> -LX|-L0,2,5...|-LALL -aN|-a0,1,2|-aALL 
+MegaCli -AdpEventLog -Clear -aN|-a0,1,2|-aALL 
+

@@ -17,3 +17,4 @@ Describe configuration
 # storcli /c0/v0 set rdcache=RA|NoRA            readahead policy
 # storcli /c0/v0 set pdcache=On|Off|Default     disc cache policy
 # storcli /c0/bbu show                          bbu status
+# storcli /c0/dall show cachecade               show cachecade configuration

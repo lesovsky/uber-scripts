@@ -1,0 +1,70 @@
+значения настроек в круглых скобках это defaults.
+
+1) Hardware: BIOS
+Следует обновить firmware всех компонентов сервера (Chassis, IPMI, RAID/Network/etc controller, Disks, PSU).
+Следует отключить NUMA c установкой Memory Policy: Interleaving
+
+2) Hardware: RAID
+Использование RAID контроллера только с BBU либо NVRAM. При использовании BBU необходим мониторинг ее состояния (общий статус, необходимость замены, заряд, статус learning). 
+RAID1 (mirror) - для системного раздела и PostgreSQL WAL (Write-Ahead Log).
+RAID10 (spanned mirror) - для раздела с БД DATADIR.
+В настройках логических томов (RAID) следует включить: Writeback, Adaptive ReadAhead, Disable write Cache when Bad BBU, Disable Disk Cache.
+Пример для MegaCli:
+megacli ldsetprop WB lall aall
+megacli ldsetprop RA lall aall
+megacli ldsetprop NoCachedBadBBU lall aall
+megacli ldsetprop DisDskCache lall aall
+При использовании дисков SAS/SATA следует отключить кэш дисков (см выше Disable Disk Cache).
+Использование дисков SSD допускается только enterprise уровня с наличием power loss protection. Например Intel серии DC3500, DC3700.
+
+3) Virtual memory and NUMA
+Лимиты грязных страниц относительно всего объема page cache. По-умолчанию используются доли в %: dirty_background_ratio 10% и dirty_ratio 20% - типа универсальная настройка под любой ворклоад. Нужно указать эти лимиты в байтах: vm.dirty_background_bytes, vm.dirty_bytes.
+sysctl:
+vm.dirty_bytes = .. (0) - здесь указываем значение равное объему кэш памяти RAID контроллера (как правило 512MB или 1GB)
+vm.dirty_background_bytes = .. (0) - здесь берем 10% от значения полученного в vm.dirty_bytes.
+vm.dirty_background_ratio = 0 (10) - при установке vm.dirty_background_bytes это значение автоматически сбрасывается в 0
+vm.dirty_ratio = 0 (20) - при установке vm.dirty_bytes это значение автоматически сбрасывается в 0
+vm.swappiness = 1 (60) - значение "0" совсем отключает swap, поэтому следует использовать значение "1".
+
+NUMA для БД следует отключать, в BIOS должно быть выставлено Memory Policy Interleaving. Количество узлов NUMA должно быть равно 1 (ls -1d /sys/devices/system/node/node*). Балансировку страниц памяти в NUMA зонах также следует отключить (по-умолчанию отключено).
+sysctl:
+vm.zone_reclaim_mode = 0 - утилизация страниц в NUMA зонах отключена (отключено по-умолчанию).
+kernel.numa_balancing = 0 - балансировка страниц памяти в NUMA зонах отключена (отключено по-умолчанию).
+
+4) Huge pages
+Транспарентные hugepages всегда отключаем (это нужно делать при перезагрузке, например /etc/rc.local): 
+# echo never > /sys/kernel/mm/transparent_hugepage/enabled
+# echo never > /sys/kernel/mm/transparent_hugepage/defrag
+
+Настройка Huge Pages (только для PostgreSQL 9.4)
+vm.hugetlb_shm_group = .. (0) - здесь указываем id основной группы системного пользователя от которого работает postgres.
+vm.hugepages_treat_as_movable = 0 (0) - отключаем миграцию hugepages между зонами (по-умолчанию отключено).
+vm.nr_hugepages = .. - указываем количество страниц (1 страница = 2MB) равное shared_buffers + 1GB.
+vm.nr_overcommit_hugepages = указываем тут количество страниц от shared_buffers * 0.02 (2% от shared_buffers)
+
+5) File systems
+файловые системы монтируем с nobarrier, noatime.
+
+6) Storage IO
+вносим все правки в /sys/block/{dev}/queue/, делаем также при автозагрузке (/etc/rc.local).
+для SAS/SATA: scheduler: deadline, nr_requests: 128, rq_affinity: 1, read_ahead_kb: 128
+для SSD: scheduler: noop, nr_requests: 128, rq_affinity: 1, read_ahead_kb: 16384
+
+7) Networking
+Увеличиваем диапазон портов чтобы pgbouncer мог принять много клиентов.
+sysctl:
+net.ipv4.ip_local_port_range = 10000    61000
+
+8) OS limits
+Увеличиваем лимит для дескрипторов файлов. Любое значение меньше 1000000 (1 млн.) округляем до 1000000 (1 млн.).
+sysctl:
+fs.file-max = 10000000
+
+9) Services
+- Ntpd должен быть установлен и запущен.
+- Pgbouncer необходимо запускать с лимитом файловых дескрипторов (ulimit -n) больше чем в max_client_conn в pgbouncer.ini. 
+
+10) Packages
+Нужны пакеты sysstat, iotop, strace, screen, git
+В домашнем каталоге pg нужен git репозиторий:
+$ cd ~pg && git clone https://github.com/PostgreSQL-Consulting/pg-utils stuff/
