@@ -12,4 +12,4 @@ JOIN pg_locks l1 ON w.pid = l1.pid AND NOT l1.granted
 JOIN pg_locks l2 ON l1.transactionid = l2.transactionid AND l2.granted
 JOIN pg_stat_activity l ON l2.pid = l.pid
 WHERE w.waiting 
-ORDER BY query_start;
+ORDER BY w.query_start;
