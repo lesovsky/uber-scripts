@@ -53,6 +53,7 @@ echo "/sys/devices/system/clocksource/clocksource0/available_clocksource: $(cat 
 /sys/devices/system/clocksource/clocksource0/current_clocksource: $(cat /sys/devices/system/clocksource/clocksource0/current_clocksource)"
 
 echo "${yellow}Tuning target: Power saving policy${reset}"
+sysctl -e vm.laptop_mode
 if [ -d /sys/devices/system/cpu/cpu0/cpufreq/ ]
   then
     echo "current kernel version: $(uname -r)"
