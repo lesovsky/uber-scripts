@@ -13,7 +13,7 @@ sysctl -e kernel.sched_migration_cost_ns kernel.sched_migration_cost kernel.sche
 
 echo "${yellow}Tuning target: Virtual memory and NUMA${reset}"
 echo "$(grep -E "^(Mem|Swap)Total:" /proc/meminfo)"
-sysctl -e vm.dirty_background_bytes vm.dirty_bytes vm.dirty_background_ratio vm.dirty_ratio vm.swappiness vm.overcommit_memory vm.overcommit_ratio
+sysctl -e vm.dirty_background_bytes vm.dirty_bytes vm.dirty_background_ratio vm.dirty_ratio vm.swappiness vm.overcommit_memory vm.overcommit_ratio vm.min_free_kbytes
 
 echo "NUMA node(s) available: $(ls -1d /sys/devices/system/node/node* |wc -l)"
 sysctl -e vm.zone_reclaim_mode kernel.numa_balancing
