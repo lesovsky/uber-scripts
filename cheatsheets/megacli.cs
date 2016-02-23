@@ -9,6 +9,9 @@ megacli adpallinfo aall         # get information about all adapters
 megacli adpbbucmd aall          # get BBU information
 megacli ldinfo lall aall        # get LogicalDrives information from all adapters
 magacli pdlist aall             # get PhysicalDrives information from all adapters
+megacli pdinfo physdrv [32:2] a0                # get info about specified drive
+megacli pdrbld showprog physdrv [32:2] a0       # get info about rebuild progress
+megacli pdlocate start|stop physdrv [32:2] a0   # start/stop flashing on specified drive
 
 # Get/Set Logical Drives Properties
 megacli ldgetprop cache lall aall       # get LogicalDrives cache information 
