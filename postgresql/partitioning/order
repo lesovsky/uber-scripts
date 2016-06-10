@@ -1,0 +1,10 @@
+psql -f postgresql/partitioning/create-partitions-in-past.sql		-- create partitions for past months
+psql -f postgresql/partitioning/create-partitions-function.sql		-- function for cron that creates new partitions
+psql -f postgresql/partitioning/create-trigger-function.sql		-- insert function for trigger on master table
+psql -f postgresql/partitioning/create-trigger-on-table.sql		-- create trigger for master
+psql -f postgresql/partitioning/create-migration-script.sql		-- migration script for moving existing data from table to partitions
+psql -f /tmp/batch.migration.sql
+
+# create partitions with function
+SELECT create_partition('tablename','tablespace');	-- create partitions for next month
+SELECT create_partition('tablename','tablespace',1);	-- create partitions for current and next month
