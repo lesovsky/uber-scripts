@@ -13,7 +13,7 @@ sysctl -e kernel.sched_migration_cost_ns kernel.sched_migration_cost kernel.sche
 
 echo "${yellow}Tuning target: Virtual memory and NUMA${reset}"
 echo "$(grep -E "^(Mem|Swap)Total:" /proc/meminfo)"
-sysctl -e vm.dirty_background_bytes vm.dirty_bytes vm.dirty_background_ratio vm.dirty_ratio vm.swappiness vm.overcommit_memory vm.overcommit_ratio vm.min_free_kbytes
+sysctl -e vm.dirty_background_bytes vm.dirty_bytes vm.dirty_background_ratio vm.dirty_ratio vm.dirty_expire_centisecs vm.swappiness vm.overcommit_memory vm.overcommit_ratio vm.min_free_kbytes
 
 echo "NUMA node(s) available: $(ls -1d /sys/devices/system/node/node* |wc -l)"
 sysctl -e vm.zone_reclaim_mode kernel.numa_balancing
@@ -42,7 +42,7 @@ if [ -d /sys/block/ ]
 fi
 
 echo "${yellow}Tuning target: Networking${reset}"
-sysctl -e net.ipv4.ip_local_port_range net.core.busy_poll net.core.busy_read net.ipv4.tcp_fastopen
+sysctl -e net.ipv4.ip_local_port_range net.core.busy_poll net.core.busy_read net.ipv4.tcp_fastopen net.core.somaxconn net.core.netdev_max_backlog net.core.rmem_max net.core.wmem_max net.ipv4.tcp_rmem net.ipv4.tcp_wmem net.ipv4.tcp_max_syn_backlog net.ipv4.tcp_slow_start_after_idle net.ipv4.tcp_tw_reuse net.ipv4.tcp_abort_on_overflow
 
 echo "${yellow}Tuning target: OS limits${reset}"
 sysctl -e fs.file-max fs.inotify.max_user_watches
