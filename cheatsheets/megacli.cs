@@ -34,5 +34,5 @@ MegaCli -AdpEventLog -GetLatest n {-info -warning -critical -fatal} {-f <fileNam
 MegaCli -AdpEventLog -GetCCIncon -f <fileName> -LX|-L0,2,5...|-LALL -aN|-a0,1,2|-aALL 
 MegaCli -AdpEventLog -Clear -aN|-a0,1,2|-aALL 
 
-# Disgnose
-megacli fwtermlogdsply aall > /tmp/out.log
+# Diagnose
+megacli fwtermlog dsply aall > /tmp/out.log
