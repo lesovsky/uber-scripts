@@ -3,6 +3,9 @@ LD - LogicalDrive
 PD - PhysicalDrive
 BBU - Backup Battery Unit
 
+FastPath with SSD Recomendations (since PERC 9 Series): WriteThrough, No ReadAhead, Direct, Enabled Disk Cache
+Classic SATA/SAS Drives: WriteBack, Adaptive ReadAhead, Cached, Disabled Disk Cache
+
 # Get Info
 megacli adpcount                # get controllers count
 megacli adpallinfo aall         # get information about all adapters
