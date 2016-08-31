@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION create_partitions(part TEXT , tblspace TEXT, init INT DEFAULT 0 ) RETURNS VOID AS $$
+CREATE OR REPLACE FUNCTION create_monthly_partitions(part TEXT , tblspace TEXT, init INT DEFAULT 0 ) RETURNS VOID AS $$
 DECLARE
   current_check TIMESTAMP;
   next_check TIMESTAMP;
