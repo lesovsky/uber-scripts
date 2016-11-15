@@ -1,0 +1,8 @@
+# systemd unit file addon for pgbouncer
+# file location: /etc/systemd/system/pgbouncer.service 
+.include /lib/systemd/system/pgbouncer.service
+
+Type=simple
+
+[Service]
+LimitNOFILE=65535
