@@ -12,10 +12,14 @@ yellow=$(tput setaf 3)
 reset=$(tput sgr0)
 
 # defaults
+reportFile="checklist.data"
 psqlCmd="psql -tXAF: -U postgres"
 prgPager="less"
+[[ $(which vi 2>/dev/null) ]] && prgEditor=$(which vi) || prgEditor=$(which nano)
 
-# functions
+#
+# Functions section
+#
 getHardwareData() {
   cpuModel=$(awk -F: '/^model name/ {print $2; exit}' /proc/cpuinfo)
   cpuCount=$(awk -F: '/^physical id/ { print $2 }' /proc/cpuinfo |sort -u |wc -l)
@@ -210,7 +214,15 @@ echo -e "${yellow}PostgreSQL: summary${reset}
   Recovery?                  $pgRecoveryStatus
   Replica count:             $pgReplicaCount
 "
-# review postgresql.org
+echo -e "${yellow}PostgreSQL: content${reset}
+  Tablespaces count:           $pgTblSpcNum
+  Tablespaces by size (top-5): $pgTblSpcList
+  Databases count:             $pgDbNum
+  Databases by size (top-5):   $pgDbList
+"
+}
+
+reviewPgConfig() {
 answer=""
 while [[ $answer != "y" &&  $answer != "n" ]]
   do
@@ -220,13 +232,6 @@ if [[ $answer == "y" ]]; then
     $prgPager $pgConfigFile
     echo ""
 fi
-
-echo -e "${yellow}PostgreSQL: content${reset}
-  Tablespaces count:           $pgTblSpcNum
-  Tablespaces by size (top-5): $pgTblSpcList
-  Databases count:             $pgDbNum
-  Databases by size (top-5):   $pgDbList
-"
 }
 
 doSingleDbAudit() {
@@ -299,13 +304,36 @@ doDbAudit() {
   done
 }
 
+addComment() {
+  answer=""
+  fileComment=""
+  while [[ $answer != "f" ]]
+    do
+      read -p "${yellow}Add Comment or Finish? [c/f]: ${reset}" answer
+      if [[ $answer == "c" ]]; then     # add comment
+        [[ -z $fileComment ]] && fileComment=$(mktemp /tmp/audit-$(date +%Y-%m-%d-%H%M)-XXXXX.cmt)
+        $prgEditor $fileComment
+      fi
+    done
+  echo "${yellow}Comment section:${reset}" >> $reportFile
+  if [[ -f $fileComment ]]; then
+       cat $fileComment >> $reportFile
+       echo -e "${green}Comment saved to the report file $reportFile.${reset}"
+       rm $fileComment
+  fi
+}
+
 main() {
+  [[ -f $reportFile ]] && mv $reportFile $reportFile.old 
   getHardwareData
   getOsData
   getPkgInfo
   getPostgresCommonData
-  printSummary
-  doDbAudit
+  (printSummary) |tee -a $reportFile
+  reviewPgConfig
+  (doDbAudit) |tee -a $reportFile
+  addComment
+  echo "${green}Report saved to $reportFile.${reset}"
 }
 
 main
