@@ -117,7 +117,7 @@ getPostgresCommonData() {
 printSummary() {
   echo -e "${yellow}Hardware: summary${reset}
   Cpu:               $( [[ -n $cpuData ]] && echo $cpuData || echo "${red}Can't understand.${reset}")
-  Numa node(s):      $([[ -n $numaNodes ]] && echo ${red}$numaNodes${reset} || echo "${green}0${reset}")
+  Numa node(s):      $([[ $numaNodes -lt 1 ]] && echo ${red}$numaNodes${reset} || echo "${green}$numaNodes${reset}")
   Memory:            $([[ -n $memData ]] && echo $memData || echo "${red}Can't understand.${reset}")
   Storage:           $([[ -n $storageData ]] && echo $storageData || echo "${red}Can't understand.${reset}")
   Disks:             $([[ -n $diskData ]] && echo $diskData || echo "${red}Can't understand.${reset}")
@@ -128,7 +128,7 @@ printSummary() {
 ${yellow}Software: summary${reset}
   System:            Hostname $hostname; Distro $os; Arch $arch; Kernel $kernel.
   Process Scheduler: kernel.sched_migration_cost_ns = $([[ $sKernSchedMigCost -le 1000000 ]] && echo "${red}$sKernSchedMigCost${reset}" || echo "${green}$sKernSchedMigCost${reset}") \
-\t\tkernel.sched_autogroup_enabled = $([[ $sKernSchedAG -eq 0 ]] && echo "${red}$sKernSchedAG${reset}" || echo "${green}$sKernSchedAG${reset}")
+\t\tkernel.sched_autogroup_enabled = $([[ $sKernSchedAG -eq 1 ]] && echo "${red}$sKernSchedAG${reset}" || echo "${green}$sKernSchedAG${reset}")
   Virtual Memory:    vm.dirty_background_bytes = $([[ $sVmDBgBytes -eq 0 ]] && echo "${red}$sVmDBgBytes${reset}" || echo "${green}$sVmDBgBytes${reset}") \
 \t\t\tvm.dirty_bytes = $([[ $sVmDBytes -eq 0 ]] && echo "${red}$sVmDBytes${reset}" || echo "${green}$sVmDBytes${reset}")
                      vm.dirty_background_ratio = $([[ $sVmDBgRatio -gt 0 ]] && echo "${red}$sVmDBgRatio${reset}" || echo "${green}$sVmDBgRatio${reset}") \
