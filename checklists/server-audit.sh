@@ -149,9 +149,9 @@ echo -n "  Storage IO:"
 if [ -d /sys/block/ ]
   j=1
   then
-    for i in $(ls -1 /sys/block/ | grep -oE 'sd[a-z]');
+    for i in $(ls -1 /sys/block/ | grep -oE '(s|xv|v)d[a-z]');
       do
-        if [[ $j == 1 ]]; then  # make offset
+        if [[ $j == 1 ]]; then  # make an offset
            echo -n "        "
         else
            echo -n "                     "
@@ -180,8 +180,8 @@ if [ -d /sys/devices/system/cpu/cpu0/cpufreq/ ]
         echo "$i: $(cat /sys/devices/system/cpu/$i/cpufreq/scaling_governor) (driver: $(cat /sys/devices/system/cpu/$i/cpufreq/scaling_driver))";
       done | awk '!(NR%2){print p $0}{p=$0}'
     else
-      echo "cpufreq directory not found, invoke lscpu: "
-      lscpu |grep -E '^(Model|Vendor|CPU( min| max)? MHz)'
+      echo "${yellow} cpufreq directory not found, exec lscpu: ${reset}"
+      lscpu |grep -E '^(Model|Vendor|CPU( min| max)? MHz)' |xargs -I $ echo "                     $"
 fi
 echo -n "                     "         # offset
 echo "Laptop mode: $([[ $sVmLaptop -ne 0 ]] && echo ${red}$sVmLaptop${reset} || echo ${green}$sVmLaptop${reset})"
@@ -191,17 +191,17 @@ ${yellow}Services: summary${reset}
   PostgreSQL:   $([[ -n $pgVersion ]] && echo "$pgVersion installed" || echo "not installed.") \
 $(if [[ -n $pgVersion ]]; then [[ -n $(pgrep postgres) ]] && echo "and running." || echo "but not running."; fi)
   pgBouncer:    $([[ -n $pgbVersion ]] && echo "$pgbVersion installed" || echo "not installed.") \
-$(if [[ -n $pgbVersion ]]; then [[ -n $(pgrep pgbouncer) ]] && echo " and running." || echo "but not running."; fi)
-  pgPool:       $([[ -n $pgpVersion ]] && echo $pgpVersion || echo "not installed.") \
-$(if [[ -n $pgpVersion ]]; then [[ -n $(pgrep pgpool) ]] && echo " and running." || echo "but not running."; fi)
-  Skytools2:    $([[ -n $pgqaVersion ]] && echo $pgqaVersion= || echo "not installed.") \
-$(if [[ -n $pgqaVersion ]]; then [[ -n $(pgrep pgqd) ]] && echo " and running." || echo "but not running."; fi)
-  Skytools3:    $([[ -n $qadVersion ]] && echo $qadVersion || echo "not installed.") \
-$(if [[ -n $qadVersion ]]; then [[ -n $(pgrep pgqd) ]] && echo " and running." || echo "but not running."; fi)
-  Slony:        $([[ -n $slonVersion ]] && echo $slonVersion || echo "not installed.") \
-$(if [[ -n $slonVersion ]]; then [[ -n $(pgrep slon) ]] && echo " and running." || echo "but not running."; fi)
-  Ntpd:         $([[ -n $ntpdVersion ]] && echo $ntpdVersion || echo "not installed.") \
-$(if [[ -n $slonVersion ]]; then [[ -n $(pgrep ntpd) ]] && echo " and running." || echo "but not running."; fi)
+$(if [[ -n $pgbVersion ]]; then [[ -n $(pgrep pgbouncer) ]] && echo "and running." || echo "but not running."; fi)
+  pgPool:       $([[ -n $pgpVersion ]] && echo "$pgpVersion installed" || echo "not installed.") \
+$(if [[ -n $pgpVersion ]]; then [[ -n $(pgrep pgpool) ]] && echo "and running." || echo "but not running."; fi)
+  Skytools2:    $([[ -n $pgqaVersion ]] && echo "$pgqaVersion installed" || echo "not installed.") \
+$(if [[ -n $pgqaVersion ]]; then [[ -n $(pgrep pgqd) ]] && echo "and running." || echo "but not running."; fi)
+  Skytools3:    $([[ -n $qadVersion ]] && echo "$qadVersion installed" || echo "not installed.") \
+$(if [[ -n $qadVersion ]]; then [[ -n $(pgrep pgqd) ]] && echo "and running." || echo "but not running."; fi)
+  Slony:        $([[ -n $slonVersion ]] && echo "$slonVersion installed" || echo "not installed.") \
+$(if [[ -n $slonVersion ]]; then [[ -n $(pgrep slon) ]] && echo "and running." || echo "but not running."; fi)
+  Ntpd:         $([[ -n $ntpdVersion ]] && echo "$ntpdVersion installed" || echo "not installed.") \
+$(if [[ -n $ntpdVersion ]]; then [[ -n $(pgrep ntpd) ]] && echo "and running." || echo "but not running."; fi)
 "
 echo -e "${yellow}PostgreSQL: summary${reset}
   Data directory:            $pgDataDir
@@ -273,10 +273,10 @@ pgGetFuncNum=$($psqlCmd2 -c "SELECT count(1) FROM pg_catalog.pg_stat_user_functi
 pgGetInhNum=$($psqlCmd2 -c "$pgGetInheritanceInfo" |awk -F: '{print $1" parent tables with "$2" child tables."}' |xargs echo)
 
 echo -e "  Target database:    $pgDbProperties
-  Namespaces count:   $pgDbGetNspNum $pgGetNspList
-  Tables count:       $pgDbGetRelNum $pgLargestRelsList
-  Indexes count:      $pgGetIdxNum
-  Functions count:    $pgGetFuncNum
+  Namespaces count:   total $pgDbGetNspNum, $pgGetNspList
+  Tables count:       total $pgDbGetRelNum, $pgLargestRelsList
+  Indexes count:      total $pgGetIdxNum.
+  Functions count:    total $pgGetFuncNum.
   Inheritance:        $pgGetInhNum
   "
 }
