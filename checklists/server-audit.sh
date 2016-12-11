@@ -16,6 +16,8 @@ reportFile="checklist.data"
 psqlCmd="psql -tXAF: -U postgres"
 prgPager="less"
 [[ $(which vi 2>/dev/null) ]] && prgEditor=$(which vi) || prgEditor=$(which nano)
+[[ $(which pv 2>/dev/null) ]] && pvUtil=true || pvUtil=false
+pvLimit="50M"                  # default rate-limit for pv
 
 #
 # Functions section
@@ -109,6 +111,7 @@ getPostgresCommonData() {
                     ORDER BY pg_catalog.pg_tablespace_size(oid) DESC LIMIT 5;"
   pgDataDir=$($psqlCmd -c "show data_directory")
   pgConfigFile=$($psqlCmd -c "show config_file")
+  pgHbaFile=$($psqlCmd -c "show hba_file")
   pgTblSpcNum=$($psqlCmd -c "select count(1) from pg_tablespace")
   pgTblSpcList=$($psqlCmd -c "$pgGetTblSpcQuery" |awk -F: '{print $1" (size: "$3", location: "$2");"}' |xargs echo |sed -e 's/;$/\./g')
   pgDbNum=$($psqlCmd -c "select count(1) from pg_database")
@@ -116,6 +119,8 @@ getPostgresCommonData() {
   pgReplicaCount=$($psqlCmd -c "select count(*) from pg_stat_replication")
   pgRecoveryStatus=$($psqlCmd -c "select pg_is_in_recovery()")
   pgLogDir=$($psqlCmd -c "show log_directory")
+  pgLogFile=$(date +$($psqlCmd -c "show log_filename"))
+  pgLcMessages=$($psqlCmd -c "show lc_messages")
 }
 
 printSummary() {
@@ -214,12 +219,79 @@ echo -e "${yellow}PostgreSQL: summary${reset}
   Recovery?                  $pgRecoveryStatus
   Replica count:             $pgReplicaCount
 "
+
+echo -e "${yellow}PostgreSQL: log file${reset}"
+answer=""
+while [[ $answer != "y" &&  $answer != "n" ]]
+  do
+    read -p "${yellow}Parse postgresql log and print summary information? [y/n]: ${reset}" answer
+  done
+if [[ $answer == "y" ]]; then
+  if [[ $(echo $pgLogDir |cut -c1) == "/" ]]; then      # this is an absolute path
+      pgCompleteLogPath="$pgLogDir/$pgLogFile"
+  else                                                        # this is a relative path
+      pgCompleteLogPath="$pgDataDir/$pgLogDir/$pgLogFile"
+  fi
+  ls -l $pgCompleteLogPath
+
+  answer=""
+  if [[ $(stat --printf="%s" $pgCompleteLogPath) -gt 1000000000 ]]; then      # print warning about the log size
+    while [[ $answer != "y" &&  $answer != "n" ]]
+      do
+        read -p "${yellow}Logfile size is more than 1Gb, parse it anyway? [y/n]: ${reset}" answer
+      done
+  else
+      answer="y"          # size is less than 2Gb and it's acceptable for us.
+  fi
+  answer=""
+  if [[ $pgLcMessages != 'C' && $pgLcMessages != 'en_US.UTF8' ]]; then      # print warning about the log size
+    while [[ $answer != "y" &&  $answer != "n" ]]
+      do
+        read -p "${red}PostgreSQL server's lc_messages is neither C nor en_US.UTF-8. ${yellow}Parse the log anyway? [y/n]: ${reset}" answer
+      done
+  else
+      answer="y"          # size is less than 2Gb and it's acceptable for us.
+  fi
+
+  tempPgLog=$(mktemp /tmp/pg.XXXXXX.out)
+  if [[ $pvUtil == true ]]; then      # handle log with pv
+      pv --progress --timer --eta --bytes --width 100 --rate-limit $pvLimit $pgCompleteLogPath |grep -oE '(ERROR|WARNING|FATAL|PANIC).*' > $tempPgLog
+  else                                # do it without pv
+      grep -oE '(ERROR|WARNING|FATAL|PANIC).*' $pgCompleteLogPath > $tempPgLog
+  fi
+
+  nPanic=$(grep -c ^PANIC $tempPgLog); nFatal=$(grep -c ^FATAL $tempPgLog); nError=$(grep -c ^ERROR $tempPgLog); nWarning=$(grep -c ^WARNING $tempPgLog)
+  echo -e "  PANIC: total $nPanic (print all)"
+  grep -wE ^PANIC $tempPgLog |sort |uniq -c |sort -rnk1
+  echo -e "  FATAL: total $nFatal (print all)"
+  grep -wE ^FATAL $tempPgLog |sort |uniq -c |sort -rnk1
+  echo -e "  ERROR: total $nError (print top10)"
+  grep -wE ^ERROR $tempPgLog |sort |uniq -c |sort -rnk1 |head -n 10
+  echo -e "  WARNING: total $nWarning (print top10)"
+  grep -wE ^WARNING $tempPgLog |sort |uniq -c |sort -rnk1 |head -n 10
+  [[ -f $tempPgLog ]] && rm -f $tempPgLog
+  echo ""
+fi
+#######
+
 echo -e "${yellow}PostgreSQL: content${reset}
   Tablespaces count:           $pgTblSpcNum
   Tablespaces by size (top-5): $pgTblSpcList
   Databases count:             $pgDbNum
   Databases by size (top-5):   $pgDbList
 "
+
+# print uncommented options from postgresql.conf
+answer=""
+while [[ $answer != "y" &&  $answer != "n" ]]
+  do
+    read -p "${yellow}Print uncommented options from postgresql.conf? [y/n]: ${reset}" answer
+  done
+if [[ $answer == "y" ]]; then
+    echo "${yellow}$pgConfigFile${reset}"
+    grep -oE '^[a-z]+.*[#]{1}' $pgConfigFile |tr -d \# |sed -e 's/^/  /g'
+    echo ""
+fi
 }
 
 reviewPgConfig() {
@@ -230,6 +302,15 @@ while [[ $answer != "y" &&  $answer != "n" ]]
   done
 if [[ $answer == "y" ]]; then
     $prgPager $pgConfigFile
+    echo ""
+fi
+answer=""
+while [[ $answer != "y" &&  $answer != "n" ]]
+  do
+    read -p "${yellow}Review pg_hba.conf? [y/n]: ${reset}" answer
+  done
+if [[ $answer == "y" ]]; then
+    $prgPager $pgHbaFile
     echo ""
 fi
 }
@@ -319,8 +400,10 @@ addComment() {
   if [[ -f $fileComment ]]; then
        cat $fileComment >> $reportFile
        echo -e "${green}Comment saved to the report file $reportFile.${reset}"
-       rm $fileComment
+       [[ -f $fileComment ]] && rm $fileComment
   fi
+  # clean out ANSI color codes
+  sed -i -r -e 's/\x1b\[[0-9;]*m//g' -e 's/\x1b\(B//g' $reportFile
 }
 
 main() {
