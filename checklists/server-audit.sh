@@ -129,7 +129,7 @@ getPostgresCommonData() {
 printSummary() {
   echo -e "${yellow}Hardware: summary${reset}
   Cpu:               $( [[ -n $cpuData ]] && echo $cpuData || echo "${red}Can't understand.${reset}")
-  Numa node(s):      $([[ $numaNodes -lt 1 ]] && echo ${red}$numaNodes${reset} || echo "${green}$numaNodes${reset}")
+  Numa node(s):      $([[ $numaNodes -gt 1 ]] && echo ${red}$numaNodes${reset} || echo "${green}$numaNodes${reset}")
   Memory:            $([[ -n $memData ]] && echo $memData || echo "${red}Can't understand.${reset}")
   Storage:           $([[ -n $storageData ]] && echo $storageData || echo "${red}Can't understand.${reset}")
   Disks:             $([[ -n $diskData ]] && echo $diskData || echo "${red}Can't understand.${reset}")
@@ -238,6 +238,11 @@ if [[ $answer == "y" ]]; then
   else                                                        # this is a relative path
       pgCompleteLogPath="$pgDataDir/$pgLogDir/$pgLogFile"
   fi
+  while [[ ! -f $pgCompleteLogPath ]]
+    do
+       # Ubuntu/Debian workaround. By default logging isn't configured adequate there.
+       read -p "${red}Logfile not found on its location. ${yellow}Enter another location: ${reset}" pgCompleteLogPath
+    done
   ls -l $pgCompleteLogPath
 
   answer=""
@@ -416,10 +421,12 @@ addComment() {
 
 main() {
   [[ -f $reportFile ]] && mv $reportFile $reportFile.old 
-  getHardwareData
-  getOsData
-  getPkgInfo
-  getPostgresCommonData
+  echo "Gathering information:"
+  echo -n "  hardware..."; getHardwareData; echo -e "\tdone"
+  echo -n "  software..."; getOsData; echo -e "\tdone"
+  echo -n "  packages..."; getPkgInfo; echo -e "\tdone"
+  echo -n "  postqresql..."; getPostgresCommonData; echo -e "\tdone"
+  echo "Report:"
   (printSummary) |tee -a $reportFile
   reviewPgConfig
   (doDbAudit) |tee -a $reportFile
