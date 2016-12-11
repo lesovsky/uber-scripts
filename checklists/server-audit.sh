@@ -17,6 +17,7 @@ psqlCmd="psql -tXAF: -U postgres"
 prgPager="less"
 [[ $(which vi 2>/dev/null) ]] && prgEditor=$(which vi) || prgEditor=$(which nano)
 [[ $(which pv 2>/dev/null) ]] && pvUtil=true || pvUtil=false
+[[ $(which curl 2>/dev/null) ]] && curlUtil=true || curlUtil=false
 pvLimit="50M"                  # default rate-limit for pv
 
 #
@@ -91,6 +92,7 @@ getPkgInfo() {
   [[ -n $binNtpd ]] && ntpdVersion=$($binNtpd --help |head -n 1 |grep -woE '[0-9p\.]+') || ntpdVersion=""
 
   pgVersion=$($psqlCmd -c 'show server_version')
+  pgMajVersion=$(echo $pgVersion |grep -oE '^[0-9]+\.[0-9]+')
 }
 
 getPostgresCommonData() {
@@ -121,6 +123,7 @@ getPostgresCommonData() {
   pgLogDir=$($psqlCmd -c "show log_directory")
   pgLogFile=$(date +$($psqlCmd -c "show log_filename"))
   pgLcMessages=$($psqlCmd -c "show lc_messages")
+  [[ $curlUtil == "true" ]] && pgLatestAvailVer=$(curl --connect-timeout 3 -s https://www.postgresql.org/ |grep "PostgreSQL .* Released!" |grep -oE '[0-9\.]+' |grep $pgMajVersion)
 }
 
 printSummary() {
@@ -198,6 +201,7 @@ echo "Laptop mode: $([[ $sVmLaptop -ne 0 ]] && echo ${red}$sVmLaptop${reset} || 
 echo -e "
 ${yellow}Services: summary${reset}
   PostgreSQL:   $([[ -n $pgVersion ]] && echo "$pgVersion installed" || echo "not installed.") \
+$(if [[ -n $pgVersion && -n $pgLatestAvailVer ]]; then echo "(latest available: $pgLatestAvailVer)"; fi ) \
 $(if [[ -n $pgVersion ]]; then [[ -n $(pgrep postgres) ]] && echo "and running." || echo "but not running."; fi)
   pgBouncer:    $([[ -n $pgbVersion ]] && echo "$pgbVersion installed" || echo "not installed.") \
 $(if [[ -n $pgbVersion ]]; then [[ -n $(pgrep pgbouncer) ]] && echo "and running." || echo "but not running."; fi)
