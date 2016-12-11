@@ -37,7 +37,7 @@ getHardwareData() {
   # required lspci for pci device_id and vendor_id translation
   storageData=$(lspci |awk -F: '/storage controller/ || /RAID/ || /SCSI/ { print $3 }' |xargs echo)
 
-  for disk in $(grep -Ewo '[s,h,v,xv]d[a-z]|c[0-9]d[0-9]' /proc/partitions |sort -r |xargs echo); do
+  for disk in $(grep -Ewo '(s|h|v|xv)d[a-z]|c[0-9]d[0-9]' /proc/partitions |sort -r |xargs echo); do
     size=$(echo $(($(cat /sys/dev/block/$(grep -w $disk /proc/partitions |awk '{print $1":"$2}')/size) * 512 / 1024 / 1024 / 1024)))
     diskData="$disk size ${size}GiB, $diskData"
   done
