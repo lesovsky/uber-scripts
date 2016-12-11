@@ -200,21 +200,23 @@ echo "Laptop mode: $([[ $sVmLaptop -ne 0 ]] && echo ${red}$sVmLaptop${reset} || 
 
 echo -e "
 ${yellow}Services: summary${reset}
-  PostgreSQL:   $([[ -n $pgVersion ]] && echo "$pgVersion installed" || echo "not installed.") \
+  PostgreSQL:        $([[ -n $pgVersion ]] && echo "$pgVersion installed" || echo "not installed.") \
 $(if [[ -n $pgVersion && -n $pgLatestAvailVer ]]; then echo "(latest available: $pgLatestAvailVer)"; fi ) \
 $(if [[ -n $pgVersion ]]; then [[ -n $(pgrep postgres) ]] && echo "and running." || echo "but not running."; fi)
-  pgBouncer:    $([[ -n $pgbVersion ]] && echo "$pgbVersion installed" || echo "not installed.") \
+  pgBouncer:         $([[ -n $pgbVersion ]] && echo "$pgbVersion installed" || echo "not installed.") \
 $(if [[ -n $pgbVersion ]]; then [[ -n $(pgrep pgbouncer) ]] && echo "and running." || echo "but not running."; fi)
-  pgPool:       $([[ -n $pgpVersion ]] && echo "$pgpVersion installed" || echo "not installed.") \
+  pgPool:            $([[ -n $pgpVersion ]] && echo "$pgpVersion installed" || echo "not installed.") \
 $(if [[ -n $pgpVersion ]]; then [[ -n $(pgrep pgpool) ]] && echo "and running." || echo "but not running."; fi)
-  Skytools2:    $([[ -n $pgqaVersion ]] && echo "$pgqaVersion installed" || echo "not installed.") \
+  Skytools2:         $([[ -n $pgqaVersion ]] && echo "$pgqaVersion installed" || echo "not installed.") \
 $(if [[ -n $pgqaVersion ]]; then [[ -n $(pgrep pgqd) ]] && echo "and running." || echo "but not running."; fi)
-  Skytools3:    $([[ -n $qadVersion ]] && echo "$qadVersion installed" || echo "not installed.") \
+  Skytools3:         $([[ -n $qadVersion ]] && echo "$qadVersion installed" || echo "not installed.") \
 $(if [[ -n $qadVersion ]]; then [[ -n $(pgrep pgqd) ]] && echo "and running." || echo "but not running."; fi)
-  Slony:        $([[ -n $slonVersion ]] && echo "$slonVersion installed" || echo "not installed.") \
+  Slony:             $([[ -n $slonVersion ]] && echo "$slonVersion installed" || echo "not installed.") \
 $(if [[ -n $slonVersion ]]; then [[ -n $(pgrep slon) ]] && echo "and running." || echo "but not running."; fi)
-  Ntpd:         $([[ -n $ntpdVersion ]] && echo "$ntpdVersion installed" || echo "not installed.") \
+  Ntpd:              $([[ -n $ntpdVersion ]] && echo "$ntpdVersion installed" || echo "not installed.") \
 $(if [[ -n $ntpdVersion ]]; then [[ -n $(pgrep ntpd) ]] && echo "and running." || echo "but not running."; fi)
+  Monitoring agents: $([[ -n $(pgrep zabbix_agentd) ]] && echo "Zabbix ") $([[ -n $(pgrep monit) ]] && echo "Monit ") \
+$([[ -n $(pgrep okagent) ]] && echo "OKmeter ") $([[ -n $(pgrep munin) ]] && echo "Munin ")
 "
 echo -e "${yellow}PostgreSQL: summary${reset}
   Data directory:            $pgDataDir
