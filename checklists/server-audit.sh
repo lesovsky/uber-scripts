@@ -37,7 +37,7 @@ getHardwareData() {
   # required lspci for pci device_id and vendor_id translation
   storageData=$(lspci |awk -F: '/storage controller/ || /RAID/ || /SCSI/ { print $3 }' |xargs echo)
 
-  for disk in $(grep -Ewo '[s,h,v]d[a-z]|c[0-9]d[0-9]' /proc/partitions |sort -r |xargs echo); do
+  for disk in $(grep -Ewo '[s,h,v,xv]d[a-z]|c[0-9]d[0-9]' /proc/partitions |sort -r |xargs echo); do
     size=$(echo $(($(cat /sys/dev/block/$(grep -w $disk /proc/partitions |awk '{print $1":"$2}')/size) * 512 / 1024 / 1024 / 1024)))
     diskData="$disk size ${size}GiB, $diskData"
   done
@@ -248,33 +248,35 @@ if [[ $answer == "y" ]]; then
       answer="y"          # size is less than 2Gb and it's acceptable for us.
   fi
   answer=""
-  if [[ $pgLcMessages != 'C' && $pgLcMessages != 'en_US.UTF8' ]]; then      # print warning about the log size
+  if [[ $pgLcMessages != 'C' && $pgLcMessages != *"en_US"* ]]; then      # print warning about the log size
     while [[ $answer != "y" &&  $answer != "n" ]]
       do
         read -p "${red}PostgreSQL server's lc_messages is neither C nor en_US.UTF-8. ${yellow}Parse the log anyway? [y/n]: ${reset}" answer
       done
   else
-      answer="y"          # size is less than 2Gb and it's acceptable for us.
+      answer="y"          # no problem with lc_messages
   fi
 
-  tempPgLog=$(mktemp /tmp/pg.XXXXXX.out)
-  if [[ $pvUtil == true ]]; then      # handle log with pv
-      pv --progress --timer --eta --bytes --width 100 --rate-limit $pvLimit $pgCompleteLogPath |grep -oE '(ERROR|WARNING|FATAL|PANIC).*' > $tempPgLog
-  else                                # do it without pv
-      grep -oE '(ERROR|WARNING|FATAL|PANIC).*' $pgCompleteLogPath > $tempPgLog
-  fi
+  if [[ $answer == "y" ]]; then	      # we are ready to parse log
+    tempPgLog=$(mktemp /tmp/pg.XXXXXX.out)
+    if [[ $pvUtil == true ]]; then      # handle log with pv
+        pv --progress --timer --eta --bytes --width 100 --rate-limit $pvLimit $pgCompleteLogPath |grep -oE '(ERROR|WARNING|FATAL|PANIC).*' > $tempPgLog
+    else                                # do it without pv
+        grep -oE '(ERROR|WARNING|FATAL|PANIC).*' $pgCompleteLogPath > $tempPgLog
+    fi
 
-  nPanic=$(grep -c ^PANIC $tempPgLog); nFatal=$(grep -c ^FATAL $tempPgLog); nError=$(grep -c ^ERROR $tempPgLog); nWarning=$(grep -c ^WARNING $tempPgLog)
-  echo -e "  PANIC: total $nPanic (print all)"
-  grep -wE ^PANIC $tempPgLog |sort |uniq -c |sort -rnk1
-  echo -e "  FATAL: total $nFatal (print all)"
-  grep -wE ^FATAL $tempPgLog |sort |uniq -c |sort -rnk1
-  echo -e "  ERROR: total $nError (print top10)"
-  grep -wE ^ERROR $tempPgLog |sort |uniq -c |sort -rnk1 |head -n 10
-  echo -e "  WARNING: total $nWarning (print top10)"
-  grep -wE ^WARNING $tempPgLog |sort |uniq -c |sort -rnk1 |head -n 10
-  [[ -f $tempPgLog ]] && rm -f $tempPgLog
-  echo ""
+    nPanic=$(grep -c ^PANIC $tempPgLog); nFatal=$(grep -c ^FATAL $tempPgLog); nError=$(grep -c ^ERROR $tempPgLog); nWarning=$(grep -c ^WARNING $tempPgLog)
+    echo -e "  PANIC: total $nPanic (print all)"
+    grep -wE ^PANIC $tempPgLog |sort |uniq -c |sort -rnk1
+    echo -e "  FATAL: total $nFatal (print all)"
+    grep -wE ^FATAL $tempPgLog |sort |uniq -c |sort -rnk1
+    echo -e "  ERROR: total $nError (print top10)"
+    grep -wE ^ERROR $tempPgLog |sort |uniq -c |sort -rnk1 |head -n 10
+    echo -e "  WARNING: total $nWarning (print top10)"
+    grep -wE ^WARNING $tempPgLog |sort |uniq -c |sort -rnk1 |head -n 10
+    [[ -f $tempPgLog ]] && rm -f $tempPgLog
+    echo ""
+  fi
 fi
 #######
 
