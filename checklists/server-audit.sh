@@ -302,8 +302,13 @@ while [[ $answer != "y" &&  $answer != "n" ]]
   done
 if [[ $answer == "y" ]]; then
     echo "${yellow}$pgConfigFile${reset}"
-    grep -oE '^[a-z]+.*[#]{1}' $pgConfigFile |tr -d \# |sed -e 's/^/  /g'
+    grep -oE "^[a-z_\.]+ = ('.*'|[a-z0-9A-Z.]+)" $pgConfigFile |sed -e 's/^/  /g'
     echo ""
+    hardLineCnt=$(grep -c -oE "^[a-z_\.]+ = ('.*'|[a-z0-9A-Z.]+)" $pgConfigFile)
+    softLineCnt=$(grep -c -oE "^[a-z]+" $pgConfigFile)
+    if [[ $hardLineCnt -ne $softLineCnt ]]; then
+        echo "${red}  Don't trust me here. Regexp failure: lines found $softLineCnt, lines printed $hardLineCnt.${reset}"
+    fi
 fi
 }
 
