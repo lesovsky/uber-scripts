@@ -19,11 +19,19 @@ echo "${yellow}Backup $destCfg to $destCfg.backup${reset}"
 cp $destCfg $destCfg.backup
 
 echo "${yellow}Processing $destCfg${reset}"
-grep -oE "^[a-z_\.]+ = ('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read guc ravno value; 
-  do 
+grep -oE "^[a-z_\.]+ = ('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read guc ravno value;
+  do
       if [[ $(grep -c -w $guc $destCfg) -eq 0 ]]; then
-          echo "WARNING: $destCfg doesn't contain $guc (value: $value)"
+          echo "WARNING: $destCfg doesn't contain ${red}$guc${reset} (value: $value)"
       else
-        sed -r -i -e "s|#?$guc = ('.*'\|[a-z0-9A-Z._-]+)|$guc = $value|g" $destCfg || echo -e "ERROR: sed failed because GUC or value contains special character ':' and this character used by sed as a field separator.\n$guc = $value"
+        sed -r -i -e "s|#?$guc = ('.*'\|[a-z0-9A-Z._-]+)|$guc = $value|g" $destCfg || echo "${red}ERROR:${reset} sed failed procssing: $guc = $value"
+      fi
+  done
+
+echo "${yellow}Done. Don't forget to fix parameters with version-specific values like:${reset}"
+grep -oE "^[a-z_\.]+ = ('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read guc ravno value;
+  do
+      if [[ $value =~ (8|9|10)\.[0-9]{1} ]]; then
+          echo "$guc = $value"
       fi
   done
