@@ -343,8 +343,7 @@ pgGetDbProperties="SELECT d.datname,
             THEN pg_catalog.pg_size_pretty(pg_catalog.pg_database_size(d.datname))
             ELSE 'No Access'
        END,
-       t.spcname,
-       pg_catalog.shobj_description(d.oid, 'pg_database')
+       t.spcname
        FROM pg_catalog.pg_database d
        JOIN pg_catalog.pg_tablespace t on d.dattablespace = t.oid
        WHERE d.datname = '$targetDb';"
@@ -367,7 +366,7 @@ pgGetInheritanceInfo="SELECT count(name),coalesce(sum(cnt),0) FROM (SELECT
        JOIN pg_namespace nmsp_child    ON nmsp_child.oid   = child.relnamespace
        GROUP BY 1) s;"
 
-pgDbProperties=$($psqlCmd2 -c "$pgGetDbProperties" |awk -F: '{print $1" (owner: "$2", encoding: "$3", collate: "$4", ctype: "$5", size: "$6", tablespace: "$7", description: "$8");"}' |xargs echo |sed -e 's/;$/\./g')
+pgDbProperties=$($psqlCmd2 -c "$pgGetDbProperties" |awk -F: '{print $1" (owner: "$2", encoding: "$3", collate: "$4", ctype: "$5", size: "$6", tablespace: "$7");"}' |xargs echo |sed -e 's/;$/\./g')
 pgDbGetNspNum=$($psqlCmd2 -c "SELECT count(1) FROM pg_catalog.pg_namespace WHERE nspname !~ '^pg_' AND nspname <> 'information_schema'")
 pgGetNspList=$($psqlCmd2 -c "$pgGetNspList" |awk -F: '{print $1"; "}' |xargs echo |sed -e 's/;$/\./g')
 pgDbGetRelNum=$($psqlCmd2 -c "SELECT count(1) FROM pg_catalog.pg_stat_user_tables")
