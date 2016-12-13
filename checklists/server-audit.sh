@@ -73,6 +73,9 @@ getOsData() {
   thpState=$(cat /sys/kernel/mm/transparent_hugepage/enabled |grep -oE '\[[a-z]+\]' |tr -d \[\])
   thpDefrag=$(cat /sys/kernel/mm/transparent_hugepage/defrag |grep -oE '\[[a-z]+\]' |tr -d \[\])
   sVmLaptop=$(sysctl -n -e vm.laptop_mode)
+  blkMqMod=$(find /sys/module -name use_blk_mq |cut -d/ -f4 |xargs echo)
+  hostList=$(ls -1 /sys/class/scsi_host/ |grep -owE 'host[0-9]+')
+  useBlkMq=$(cat /sys/class/scsi_host/host*/use_blk_mq |uniq -c)
 }
 
 getPkgInfo() {
@@ -158,22 +161,29 @@ ${yellow}Software: summary${reset}
                           /sys/kernel/mm/transparent_hugepage/defrag: $([[ $thpDefrag != "never" ]] && echo "${red}$thpDefrag${reset}" || echo "${green}$thpDefrag${reset}")"
 
 echo -n "  Storage IO:"
+# analyze blk-mq support
+echo -n "${yellow}        blk-mq support:${reset} $([[ -n $blkMqMod ]] && echo " $blkMqMod" || echo " not supported")"
+echo -n -e "${yellow}\t host status:${reset} "
+for host in $hostList;
+do 
+    if [[ -f /sys/class/scsi_host/$host/use_blk_mq ]]; then
+        echo -n -e "$host: $([[ $(cat /sys/class/scsi_host/$host/use_blk_mq) == 1 ]] && echo "${green}active${reset}" || echo "${red}not active${reset}")\t";
+    fi 
+done
+    echo ""
+
+
+# analyze /sys/block
 if [ -d /sys/block/ ]
-  j=1
   then
     for i in $(ls -1 /sys/block/ | grep -oE '(s|xv|v)d[a-z]');
       do
-        if [[ $j == 1 ]]; then  # make an offset
-           echo -n "        "
-        else
-           echo -n "                     "
-        fi
+        echo -n "                     "
         echo "$i: rotational: $(cat /sys/block/$i/queue/rotational); \
         scheduler: $(cat /sys/block/$i/queue/scheduler); \
         nr_requests: $(cat /sys/block/$i/queue/nr_requests); \
         rq_affinity: $(cat /sys/block/$i/queue/rq_affinity); \
         read_ahead_kb: $(cat /sys/block/$i/queue/read_ahead_kb)";
-        j=$j+1;
       done #| awk '!(NR%2){print p "\t\t\t" $0}{p=$0}'
   else
     echo "/sys/block directory not found."
@@ -186,17 +196,37 @@ echo -n "  Power saving mode:"
 if [ -d /sys/devices/system/cpu/cpu0/cpufreq/ ]
   then
     echo " current kernel version: $(uname -r)"
+    echo -n "                     "         # offset
+    echo "${yellow}CPU scaling governor:${reset}"
     for i in $(ls -1 /sys/devices/system/cpu/ | grep -oE 'cpu[0-9]+');
       do
         echo -n "                     "         # offset
-        echo "$i: $(cat /sys/devices/system/cpu/$i/cpufreq/scaling_governor) (driver: $(cat /sys/devices/system/cpu/$i/cpufreq/scaling_driver))";
+        governor=$(cat /sys/devices/system/cpu/$i/cpufreq/scaling_governor)
+        driver=$(cat /sys/devices/system/cpu/$i/cpufreq/scaling_driver)
+        echo -n "$i: $([[ $governor == "performance" ]] && echo "${green}$governor${reset}" || echo "${red}$governor${reset}")"
+        echo -n -e " (driver: $([[ $driver == "intel_pstate" ]] && echo "${green}$driver${reset}" || echo "${red}$driver${reset}"))\n"
       done | awk '!(NR%2){print p $0}{p=$0}'
     else
       echo "${yellow} cpufreq directory not found, exec lscpu: ${reset}"
       lscpu |grep -E '^(Model|Vendor|CPU( min| max)? MHz)' |xargs -I $ echo "                     $"
 fi
 echo -n "                     "         # offset
-echo "Laptop mode: $([[ $sVmLaptop -ne 0 ]] && echo ${red}$sVmLaptop${reset} || echo ${green}$sVmLaptop${reset})"
+
+if [[ -n $hostList ]]; then
+    echo "${yellow}Aggressive Link Power Management:${reset}"
+    echo -n "                     "         # offset
+    for host in $hostList;
+      do
+        if [[ -f /sys/class/scsi_host/$host/link_power_management_policy ]]; then
+          state=$(cat /sys/class/scsi_host/$host/link_power_management_policy)
+          echo -e -n "$host: $([[ $state == "max_performance" ]] && echo "${green}$state${reset}" || echo "${red}$state${reset}")\t";
+        fi 
+      done
+    echo ""
+fi
+
+echo -n "                     "         # offset
+echo "${yellow}Laptop mode:${reset} $([[ $sVmLaptop -ne 0 ]] && echo ${red}$sVmLaptop${reset} || echo ${green}$sVmLaptop${reset})"
 
 echo -e "
 ${yellow}Services: summary${reset}
