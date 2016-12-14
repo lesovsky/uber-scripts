@@ -35,7 +35,7 @@ getHardwareData() {
   memData="physical memory: $memTotal; swap: $swapTotal"
 
   # required lspci for pci device_id and vendor_id translation
-  storageData=$(lspci |awk -F: '/storage controller/ || /RAID/ || /SCSI/ { print $3 }' |xargs echo)
+  storageData=$(lspci 2>/dev/null |awk -F: '/storage controller/ || /RAID/ || /SCSI/ { print $3 }' |xargs echo)
 
   for disk in $(grep -Ewo '(s|h|v|xv)d[a-z]|c[0-9]d[0-9]' /proc/partitions |sort -r |xargs echo); do
     size=$(echo $(($(cat /sys/dev/block/$(grep -w $disk /proc/partitions |awk '{print $1":"$2}')/size) * 512 / 1024 / 1024 / 1024)))
@@ -44,7 +44,7 @@ getHardwareData() {
   diskData=$(echo $diskData |sed -e 's/,$//')
 
   # required lspci for pci device_id and vendor_id translation
-  netData=$(lspci |awk -F: '/Ethernet controller/ {print $3}' |sort |uniq -c |sed -e 's/$/,/g' |xargs echo |tr -d ",$")
+  netData=$(lspci 2>/dev/null |awk -F: '/Ethernet controller/ {print $3}' |sort |uniq -c |sed -e 's/$/,/g' |xargs echo |tr -d ",$")
 }
 
 getOsData() {
@@ -70,6 +70,10 @@ getOsData() {
   sKernNumaBal=$(sysctl -n -e kernel.numa_balancing)
   sVmNrHP=$(sysctl -n -e vm.nr_hugepages)
   sVmNrOverHP=$(sysctl -n -e vm.nr_overcommit_hugepages)
+  hpSizeKb=$(grep -wE "^Hugepagesize:" /proc/meminfo |awk '{print $2}')
+  hpTotalAlloc=$(grep -wE "^HugePages_Total:" /proc/meminfo |awk '{print $2}')
+  hpTotalAllocMb=$(( $hpTotalAlloc * $hpSizeKb / 1024))
+  thpTotalAllocMb=$(grep -wE "^AnonHugePages:" /proc/meminfo |awk '{print $2 / 1024}' )
   thpState=$(cat /sys/kernel/mm/transparent_hugepage/enabled |grep -oE '\[[a-z]+\]' |tr -d \[\])
   thpDefrag=$(cat /sys/kernel/mm/transparent_hugepage/defrag |grep -oE '\[[a-z]+\]' |tr -d \[\])
   sVmLaptop=$(sysctl -n -e vm.laptop_mode)
@@ -92,7 +96,7 @@ getPkgInfo() {
   [[ -n $binPgqadm ]] && pgqaVersion=$($binPgqadm --version |cut -d" " -f3) || pgqaVersion=""
   [[ -n $binQadmin ]] && qadVersion=$($binQadmin --version |cut -d" " -f3) || qadVersion=""
   [[ -n $binSlon ]] && slonVersion=$($binSlon -v |cut -d" " -f3) || slonVersion=""
-  [[ -n $binNtpd ]] && ntpdVersion=$($binNtpd --help |head -n 1 |grep -woE '[0-9p\.]+') || ntpdVersion=""
+  [[ -n $binNtpd ]] && ntpdVersion=$($binNtpd --version 2>&1 |head -n 1 |grep -woE '[0-9p\.]+') || ntpdVersion=""
 
   pgVersion=$($psqlCmd -c 'show server_version')
   pgMajVersion=$(echo $pgVersion |grep -oE '^[0-9]+\.[0-9]+')
@@ -155,9 +159,11 @@ ${yellow}Software: summary${reset}
 \t\t\tvm.swappiness = $([[ $sVmSwap -gt 10 ]] && echo "${red}$sVmSwap${reset}" || echo "${green}$sVmSwap${reset}")
   NUMA:              vm.zone_reclaim_mode = $([[ $sVmZoneReclaim -eq 1 ]] && echo "${red}$sVmZoneReclaim${reset}" || echo "${green}$sVmZoneReclaim${reset}") \
 \t\t\t\tkernel.numa_balancing = $([[ $sKernNumaBal -eq 1 ]] && echo "${red}$sKernNumaBal${reset}" || echo "${green}$sKernNumaBal${reset}")
-  Huge Pages:        vm.nr_hugepages = ${yellow}$sVmNrHP${reset} \
+  Huge Pages:        Huge page size: $hpSizeKb kB, Total pages: $hpTotalAlloc ($hpTotalAllocMb MB)
+                     vm.nr_hugepages = ${yellow}$sVmNrHP${reset} \
 \t\t\t\tvm.nr_overcommit_hugepages = ${yellow}$sVmNrOverHP${reset}
-  Transparent Hugepages:  /sys/kernel/mm/transparent_hugepage/enabled: $([[ $thpState != "never" ]] && echo "${red}$thpState${reset}" || echo "${green}$thpState${reset}")
+  Transparent Hugepages:  Huge page size: $hpSizeKb kB, used: "$thpTotalAllocMb"MB
+                          /sys/kernel/mm/transparent_hugepage/enabled: $([[ $thpState != "never" ]] && echo "${red}$thpState${reset}" || echo "${green}$thpState${reset}")
                           /sys/kernel/mm/transparent_hugepage/defrag: $([[ $thpDefrag != "never" ]] && echo "${red}$thpDefrag${reset}" || echo "${green}$thpDefrag${reset}")"
 
 echo -n "  Storage IO:"
@@ -192,12 +198,10 @@ fi
 echo -n -e "  Filesystems:       ${yellow}Check for Ext3, Ext4, ReiserFS, XFS and Rootfs${reset}\n"
 mount |grep -w -E 'ext(3|4)|reiserfs|xfs|rootfs' |column -t | while read line; do echo "                     $line"; done
 
-echo -n "  Power saving mode:"
+echo -n "  Power saving mode: ${yellow}CPU scaling governor${reset} (running kernel: $(uname -r)): "
 if [ -d /sys/devices/system/cpu/cpu0/cpufreq/ ]
   then
-    echo " current kernel version: $(uname -r)"
-    echo -n "                     "         # offset
-    echo "${yellow}CPU scaling governor:${reset}"
+    echo "${red}used.${reset}"         # offset
     for i in $(ls -1 /sys/devices/system/cpu/ | grep -oE 'cpu[0-9]+');
       do
         echo -n "                     "         # offset
@@ -207,19 +211,23 @@ if [ -d /sys/devices/system/cpu/cpu0/cpufreq/ ]
         echo -n -e " (driver: $([[ $driver == "intel_pstate" ]] && echo "${green}$driver${reset}" || echo "${red}$driver${reset}"))\n"
       done | awk '!(NR%2){print p $0}{p=$0}'
     else
-      echo "${yellow} cpufreq directory not found, exec lscpu: ${reset}"
+        echo "${green}not used${reset} (cpufreq directory not found)."
+      echo -n "                     "              # offset
+      echo "check frequency with lscpu:"
       lscpu |grep -E '^(Model|Vendor|CPU( min| max)? MHz)' |xargs -I $ echo "                     $"
 fi
 echo -n "                     "         # offset
 
+echo "${yellow}Aggressive Link Power Management:${reset}"
 if [[ -n $hostList ]]; then
-    echo "${yellow}Aggressive Link Power Management:${reset}"
     echo -n "                     "         # offset
     for host in $hostList;
       do
         if [[ -f /sys/class/scsi_host/$host/link_power_management_policy ]]; then
           state=$(cat /sys/class/scsi_host/$host/link_power_management_policy)
           echo -e -n "$host: $([[ $state == "max_performance" ]] && echo "${green}$state${reset}" || echo "${red}$state${reset}")\t";
+        else
+          echo -e -n "$host: ${green}ALPM not used${reset}\t";
         fi 
       done
     echo ""
