@@ -91,12 +91,12 @@ getPkgInfo() {
   [[ $(which ntpd 2>/dev/null) ]] && binNtpd=$(which ntpd) || binNtpd=""
   
 
-  [[ -n $binPgbouncer ]] && pgbVersion=$($binPgbouncer --version |cut -d" " -f3) || pgbVersion=""
-  [[ -n $binPgpool ]] && pgpVersion=$($binPgpool --version |cut -d" " -f3) || pgpVersion=""
-  [[ -n $binPgqadm ]] && pgqaVersion=$($binPgqadm --version |cut -d" " -f3) || pgqaVersion=""
-  [[ -n $binQadmin ]] && qadVersion=$($binQadmin --version |cut -d" " -f3) || qadVersion=""
-  [[ -n $binSlon ]] && slonVersion=$($binSlon -v |cut -d" " -f3) || slonVersion=""
-  [[ -n $binNtpd ]] && ntpdVersion=$($binNtpd --version 2>&1 |head -n 1 |grep -woE '[0-9p\.]+') || ntpdVersion=""
+  [[ -n $binPgbouncer ]] && pgbVersion=$($binPgbouncer --version 2>/dev/null |cut -d" " -f3) || pgbVersion=""
+  [[ -n $binPgpool ]] && pgpVersion=$($binPgpool --version 2>/dev/null |cut -d" " -f3) || pgpVersion=""
+  [[ -n $binPgqadm ]] && pgqaVersion=$($binPgqadm --version 2>/dev/null |cut -d" " -f3) || pgqaVersion=""
+  [[ -n $binQadmin ]] && qadVersion=$($binQadmin --version 2>/dev/null |cut -d" " -f3) || qadVersion=""
+  [[ -n $binSlon ]] && slonVersion=$($binSlon -v 2>/dev/null |cut -d" " -f3) || slonVersion=""
+  [[ -n $binNtpd ]] && ntpdVersion=$($binNtpd --version 2>&1 |head -n 1 |grep -woE '[0-9p\.]+'|head -n 1) || ntpdVersion=""
 
   pgVersion=$($psqlCmd -c 'show server_version')
   pgMajVersion=$(echo $pgVersion |grep -oE '^[0-9]+\.[0-9]+')
