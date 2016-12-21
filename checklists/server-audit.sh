@@ -404,6 +404,15 @@ pgGetInheritanceInfo="SELECT count(name),coalesce(sum(cnt),0) FROM (SELECT
        JOIN pg_namespace nmsp_parent   ON nmsp_parent.oid  = parent.relnamespace
        JOIN pg_namespace nmsp_child    ON nmsp_child.oid   = child.relnamespace
        GROUP BY 1) s;"
+pgGetIndexTypes="SELECT
+       CASE
+           WHEN (indexdef ~'USING btree') THEN 'btree'
+           WHEN (indexdef ~'USING hash') then 'hash'
+           WHEN (indexdef ~'USING gin') then 'gin'
+           WHEN (indexdef ~'USING gist') then 'gist'
+           ELSE 'unknown'
+        END, count(*)
+        FROM pg_indexes GROUP BY 1 ORDER BY 2"
 
 pgDbProperties=$($psqlCmd2 -c "$pgGetDbProperties" |awk -F: '{print $1" (owner: "$2", encoding: "$3", collate: "$4", ctype: "$5", size: "$6", tablespace: "$7");"}' |xargs echo |sed -e 's/;$/\./g')
 pgDbGetNspNum=$($psqlCmd2 -c "SELECT count(1) FROM pg_catalog.pg_namespace WHERE nspname !~ '^pg_' AND nspname <> 'information_schema'")
@@ -411,13 +420,14 @@ pgGetNspList=$($psqlCmd2 -c "$pgGetNspList" |awk -F: '{print $1"; "}' |xargs ech
 pgDbGetRelNum=$($psqlCmd2 -c "SELECT count(1) FROM pg_catalog.pg_stat_user_tables")
 pgLargestRelsList=$($psqlCmd2 -c "$pgGetLargestRels" |awk -F: '{print $1" (size: "$2");"}' |xargs echo |sed -e 's/;$/\./g')
 pgGetIdxNum=$($psqlCmd2 -c "SELECT count(1) FROM pg_catalog.pg_stat_user_indexes")
+pgGetIdxTypesList=$($psqlCmd2 -c "$pgGetIndexTypes" |awk -F: '{print $1" "$2";"}' |xargs echo |sed -e 's/;$/\./g')
 pgGetFuncNum=$($psqlCmd2 -c "SELECT count(1) FROM pg_catalog.pg_stat_user_functions")
 pgGetInhNum=$($psqlCmd2 -c "$pgGetInheritanceInfo" |awk -F: '{print $1" parent tables with "$2" child tables."}' |xargs echo)
 
 echo -e "  Target database:    $pgDbProperties
-  Namespaces count:   total $pgDbGetNspNum, $pgGetNspList
-  Tables count:       total $pgDbGetRelNum, $pgLargestRelsList
-  Indexes count:      total $pgGetIdxNum.
+  Namespaces count:   total $pgDbGetNspNum. $pgGetNspList
+  Tables count:       total $pgDbGetRelNum. $pgLargestRelsList
+  Indexes count:      total $pgGetIdxNum. $pgGetIdxTypesList
   Functions count:    total $pgGetFuncNum.
   Inheritance:        $pgGetInhNum
   "
