@@ -26,7 +26,8 @@ pvLimit="50M"                  # default rate-limit for pv
 getHardwareData() {
   cpuModel=$(awk -F: '/^model name/ {print $2; exit}' /proc/cpuinfo)
   cpuCount=$(awk -F: '/^physical id/ { print $2 }' /proc/cpuinfo |sort -u |wc -l)
-  cpuData="$cpuCount x $cpuModel"
+  cpuCoreCount=$(lscpu |grep "On-line CPU(s) list:" |xargs)
+  cpuData="$cpuCount x $cpuModel ($cpuCoreCount)"
 
   numaNodes=$(lscpu |grep -w "^NUMA node" |awk '{print $3}')
 
