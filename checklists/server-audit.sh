@@ -122,6 +122,8 @@ getPostgresCommonData() {
   pgDataDir=$($psqlCmd -c "show data_directory")
   pgConfigFile=$($psqlCmd -c "show config_file")
   pgHbaFile=$($psqlCmd -c "show hba_file")
+  pgAutoConfigFile=$(ls -1 $pgDataDir/postgresql.auto.conf 2>/dev/null)
+  pgAutoConfigNumLines=$(grep -c -vE '^#|^#' $pgDataDir/postgresql.auto.conf 2>/dev/null)
   pgTblSpcNum=$($psqlCmd -c "select count(1) from pg_tablespace")
   pgTblSpcList=$($psqlCmd -c "$pgGetTblSpcQuery" |awk -F: '{print $1" (size: "$3", location: "$2");"}' |xargs echo |sed -e 's/;$/\./g')
   pgDbNum=$($psqlCmd -c "select count(1) from pg_database")
@@ -260,6 +262,8 @@ $([[ -n $(pgrep okagent) ]] && echo "OKmeter ") $([[ -n $(pgrep munin) ]] && ech
 echo -e "${yellow}PostgreSQL: summary${reset}
   Data directory:            $pgDataDir
   Main configuration:        $pgConfigFile
+  Auto configuration:        $(if [[ -n $pgAutoConfigFile ]]; then echo "$pgAutoConfigFile"; else echo "Not found."; fi) \
+$( if [[ ($pgAutoConfigNumLines -gt 0) && (-n $pgAutoConfigFile) ]]; then echo "${red}exists and is not empty.${reset}"; else echo "${green}exists but nothing defined.${reset}"; fi )
   Log directory:             $(if [[ $(echo $pgLogDir |cut -c1) == "/" ]]; then echo "${green}$pgLogDir${reset}"; else echo "${red}$pgDataDir/$pgLogDir${reset}"; fi)
   Recovery?                  $pgRecoveryStatus
   Replica count:             $pgReplicaCount
@@ -411,8 +415,13 @@ pgGetIndexTypes="SELECT
            WHEN (indexdef ~'USING gin') then 'gin'
            WHEN (indexdef ~'USING gist') then 'gist'
            ELSE 'unknown'
-        END, count(*)
-        FROM pg_indexes GROUP BY 1 ORDER BY 2"
+       END, count(*)
+       FROM pg_indexes GROUP BY 1 ORDER BY 2"
+pgGetFuncTypes="SELECT l.lanname,count(*)
+       FROM pg_proc p
+       LEFT JOIN pg_language l ON p.prolang = l.oid
+       LEFT JOIN pg_namespace n ON n.oid = p.pronamespace
+       WHERE n.nspname NOT IN ('information_schema','pg_catalog','pg_toast') GROUP BY 1 ORDER BY 2 DESC;"
 
 pgDbProperties=$($psqlCmd2 -c "$pgGetDbProperties" |awk -F: '{print $1" (owner: "$2", encoding: "$3", collate: "$4", ctype: "$5", size: "$6", tablespace: "$7");"}' |xargs echo |sed -e 's/;$/\./g')
 pgDbGetNspNum=$($psqlCmd2 -c "SELECT count(1) FROM pg_catalog.pg_namespace WHERE nspname !~ '^pg_' AND nspname <> 'information_schema'")
@@ -422,13 +431,14 @@ pgLargestRelsList=$($psqlCmd2 -c "$pgGetLargestRels" |awk -F: '{print $1" (size:
 pgGetIdxNum=$($psqlCmd2 -c "SELECT count(1) FROM pg_catalog.pg_stat_user_indexes")
 pgGetIdxTypesList=$($psqlCmd2 -c "$pgGetIndexTypes" |awk -F: '{print $1" "$2";"}' |xargs echo |sed -e 's/;$/\./g')
 pgGetFuncNum=$($psqlCmd2 -c "SELECT count(1) FROM pg_catalog.pg_stat_user_functions")
+pgGetFuncList=$($psqlCmd2 -c "$pgGetFuncTypes" |awk -F: '{print $1" "$2";"}' |xargs echo |sed -e 's/;$/\./g')
 pgGetInhNum=$($psqlCmd2 -c "$pgGetInheritanceInfo" |awk -F: '{print $1" parent tables with "$2" child tables."}' |xargs echo)
 
 echo -e "  Target database:    $pgDbProperties
   Namespaces count:   total $pgDbGetNspNum. $pgGetNspList
   Tables count:       total $pgDbGetRelNum. $pgLargestRelsList
   Indexes count:      total $pgGetIdxNum. $pgGetIdxTypesList
-  Functions count:    total $pgGetFuncNum.
+  Functions count:    total $pgGetFuncNum. $pgGetFuncList
   Inheritance:        $pgGetInhNum
   "
 }
