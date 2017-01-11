@@ -16,7 +16,7 @@ SELECT round(100.0*checkpoints_req/checkpoints,1)                   "Forced chec
        round(1.0*buffers_alloc/total_buffers,3)         "New buffer allocation ratio",
        now()-stats_reset                                "Since stats reset",
        now()-pg_postmaster_start_time()                 "Uptime",
-       '-------'                                                  "-------------------------------------",
+       '--------------------------------------'         "--------------------------------------",
        *
   FROM (
     SELECT bg.*,
