@@ -181,7 +181,6 @@ do
 done
     echo ""
 
-
 # analyze /sys/block
 if [ -d /sys/block/ ]
   then
@@ -263,12 +262,12 @@ echo -e "${yellow}PostgreSQL: summary${reset}
   Data directory:            $pgDataDir
   Main configuration:        $pgConfigFile
   Auto configuration:        $(if [[ -n $pgAutoConfigFile ]]; then echo "$pgAutoConfigFile"; else echo "Not found."; fi) \
-$( if [[ ($pgAutoConfigNumLines -gt 0) && (-n $pgAutoConfigFile) ]]; then echo "${red}exists and is not empty.${reset}"; else echo "${green}exists but nothing defined.${reset}"; fi )
+$( if [[ -n $pgAutoConfigFile ]]; then if [[ $pgAutoConfigNumLines -gt 0 ]]; then echo "${red}exists and is not empty.${reset}"; else echo "${green}exists but nothing defined.${reset}"; fi; fi )
   Log directory:             $(if [[ $(echo $pgLogDir |cut -c1) == "/" ]]; then echo "${green}$pgLogDir${reset}"; else echo "${red}$pgDataDir/$pgLogDir${reset}"; fi)
   Recovery?                  $pgRecoveryStatus
   Replica count:             $pgReplicaCount
 "
-
+sleep 0.1
 echo -e "${yellow}PostgreSQL: log file${reset}"
 answer=""
 while [[ $answer != "y" &&  $answer != "n" ]]
