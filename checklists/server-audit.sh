@@ -127,7 +127,7 @@ getPostgresCommonData() {
   pgTblSpcNum=$($psqlCmd -c "select count(1) from pg_tablespace")
   pgTblSpcList=$($psqlCmd -c "$pgGetTblSpcQuery" |awk -F: '{print $1" (size: "$3", location: "$2");"}' |xargs echo |sed -e 's/;$/\./g')
   pgDbNum=$($psqlCmd -c "select count(1) from pg_database")
-  pgDbList=$($psqlCmd -c "$pgGetDbQuery" |awk -F: '{print $1" ("$5", "$2", "$3");"}' |grep -vE 'template|postgres' |xargs echo |sed -e 's/;$/\./g')
+  pgDbList=$($psqlCmd -c "$pgGetDbQuery" |awk -F: '{print $1" ("$5", "$2", "$3");"}' |xargs echo |sed -e 's/;$/\./g')
   pgReplicaCount=$($psqlCmd -c "select count(*) from pg_stat_replication")
   pgRecoveryStatus=$($psqlCmd -c "select pg_is_in_recovery()")
   pgLogDir=$($psqlCmd -c "show log_directory")
