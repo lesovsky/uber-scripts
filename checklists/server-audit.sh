@@ -49,7 +49,8 @@ getHardwareData() {
 }
 
 getOsData() {
-  hostname=$(uname --nodename)
+  hostname=$(hostname)
+  full_hostname=$(hostname -f)
   arch=$(uname --machine)
   os=$(find /etc -maxdepth 1 -name '*release' -type f | xargs cat |grep ^PRETTY_NAME |cut -d= -f2 |tr -d \")
   kernel=$(uname -sr)
@@ -148,7 +149,7 @@ printSummary() {
   Assigned IP(s):    $([[ -n $ip ]] && echo $ip || echo "${red}Can't understand.${reset}")
 
 ${yellow}Software: summary${reset}
-  System:            Hostname $hostname; Distro $os; Arch $arch; Kernel $kernel.
+System:            Hostname $([[ -n $full_hostname ]] && echo $full_hostname || echo $hostname); Distro $os; Arch $arch; Kernel $kernel.
   Process Scheduler: kernel.sched_migration_cost_ns = $([[ $sKernSchedMigCost -le 1000000 ]] && echo "${red}$sKernSchedMigCost${reset}" || echo "${green}$sKernSchedMigCost${reset}") \
 \t\tkernel.sched_autogroup_enabled = $([[ $sKernSchedAG -eq 1 ]] && echo "${red}$sKernSchedAG${reset}" || echo "${green}$sKernSchedAG${reset}")
   Virtual Memory:    vm.dirty_background_bytes = $([[ $sVmDBgBytes -eq 0 ]] && echo "${red}$sVmDBgBytes${reset}" || echo "${green}$sVmDBgBytes${reset}") \
