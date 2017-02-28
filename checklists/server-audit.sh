@@ -273,6 +273,7 @@ echo -e "${yellow}PostgreSQL: log file${reset}"
 answer=""
 while [[ $answer != "y" &&  $answer != "n" ]]
   do
+    sleep 0.1
     read -p "${yellow}Parse postgresql log and print summary information? [y/n]: ${reset}" answer
   done
 if [[ $answer == "y" ]]; then
@@ -447,6 +448,7 @@ doDbAudit() {
   answer=""
   while [[ $answer != "n" ]]
     do
+      sleep 0.1
       read -p "${yellow}Do an audit of the particular database? [y/n]: ${reset}" answer
       dbexists=""
       while [[ $dbexists != "1" && $answer == 'y' ]]
@@ -466,6 +468,7 @@ addComment() {
   fileComment=""
   while [[ $answer != "f" ]]
     do
+      sleep 0.1
       read -p "${yellow}Add Comment or Finish? [c/f]: ${reset}" answer
       if [[ $answer == "c" ]]; then     # add comment
         [[ -z $fileComment ]] && fileComment=$(mktemp /tmp/audit-$(date +%Y-%m-%d-%H%M)-XXXXX.cmt)
