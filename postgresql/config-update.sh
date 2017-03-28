@@ -25,7 +25,7 @@ cp $destCfg $destCfg.backup
 echo "${green}INFO:${reset} processing $destCfg"
 grep -oE "^[a-z_\.]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
   do
-      guc=$(echo $line |cut -d= -f1 |tr -d " "); value=$(echo $line |cut -d= -f2 | tr -d " ")
+      guc=$(echo $line |cut -d= -f1 |sed -e 's/^[ ]*//'); value=$(echo $line |cut -d= -f2 |sed -e 's/^[ ]*//')
       if [[ $(grep -c -w $guc $destCfg) -eq 0 ]]; then
           echo "${yellow}WARNING:${reset} $destCfg doesn't contain ${red}$guc${reset} (value: $value)"
       else
@@ -37,7 +37,7 @@ grep -oE "^[a-z_\.]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
 echo "${green}Done.${reset} Don't forget to fix parameters with version-specific values."
 grep -oE "^[a-z_\.]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
   do
-      guc=$(echo $line |cut -d= -f1 |tr -d " "); value=$(echo $line |cut -d= -f2 | tr -d " ")
+      guc=$(echo $line |cut -d= -f1 |sed -e 's/^[ ]*//'); value=$(echo $line |cut -d= -f2 |sed -e 's/^[ ]*//')
       if [[ $value =~ (8|9|10)\.[0-9]{1} ]]; then
           echo "$guc = $value"
       fi
