@@ -23,21 +23,22 @@ cp $destCfg $destCfg.backup
 
 # do processing
 echo "${green}INFO:${reset} processing $destCfg"
-grep -oE "^[a-z_\.]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
+grep -oE "^[a-z_\. ]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
   do
-      guc=$(echo $line |cut -d= -f1 |sed -e 's/^[ ]*//'); value=$(echo $line |cut -d= -f2 |sed -e 's/^[ ]*//')
+      # second e-script in sed is used for quotting '|' because that one is used as a separator in the next sed replacing command.
+      guc=$(echo $line |cut -d= -f1 |tr -d " "); value=$(echo $line |cut -d= -f2 |sed -e 's/^[ ]*//' -e 's/|/\\|/g')
       if [[ $(grep -c -w $guc $destCfg) -eq 0 ]]; then
           echo "${yellow}WARNING:${reset} $destCfg doesn't contain ${red}$guc${reset} (value: $value)"
       else
-        sed -r -i -e "s|#?$guc[ ]*=[ ]*('.*'\|[a-z0-9A-Z._-]+)|$guc = $value|g" $destCfg || echo "${red}ERROR:${reset} sed processing failed: $guc = $value"
+          sed -r -i -e "s|(#\| )?$guc[ ]*=[ ]*('.*'\|[a-z0-9A-Z._-]+)|$guc = $value|g" $destCfg || echo "${red}ERROR:${reset} sed processing failed: $guc = $value"
       fi
   done
 
 # check version-specific values
 echo "${green}Done.${reset} Don't forget to fix parameters with version-specific values."
-grep -oE "^[a-z_\.]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
+grep -oE "^[a-z_\. ]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
   do
-      guc=$(echo $line |cut -d= -f1 |sed -e 's/^[ ]*//'); value=$(echo $line |cut -d= -f2 |sed -e 's/^[ ]*//')
+      guc=$(echo $line |cut -d= -f1 |tr -d " "); value=$(echo $line |cut -d= -f2 |sed -e 's/^[ ]*//')
       if [[ $value =~ (8|9|10)\.[0-9]{1} ]]; then
           echo "$guc = $value"
       fi
