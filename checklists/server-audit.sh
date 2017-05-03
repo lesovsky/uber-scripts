@@ -101,7 +101,7 @@ getPkgInfo() {
   [[ -n $binNtpd ]] && ntpdVersion=$($binNtpd --version 2>&1 |head -n 1 |grep -woE '[0-9p\.]+'|head -n 1) || ntpdVersion=""
 
   pgVersion=$($psqlCmd -c 'show server_version')
-  pgMajVersion=$(echo $pgVersion |grep -oE '^[0-9]+\.[0-9]+')
+  pgMajVersion=$(echo $pgVersion |grep -oE '^[0-9]+\.[0-9]+|^1[0-9]+')
 }
 
 getPostgresCommonData() {
@@ -134,6 +134,8 @@ getPostgresCommonData() {
   pgLogDir=$($psqlCmd -c "show log_directory")
   pgLogFile=$(date +$($psqlCmd -c "show log_filename"))
   pgLcMessages=$($psqlCmd -c "show lc_messages")
+  numaMapsLocation="/proc/$(head -n 1 $pgDataDir/postmaster.pid)/numa_maps"
+  if [[ -f $numaMapsLocation ]]; then numaCurPolicy=$(cat $numaMapsLocation 2>/dev/null|head -n 1 |cut -d" " -f2); fi
   [[ $curlUtil == "true" ]] && pgLatestAvailVer=$(curl --connect-timeout 3 -s https://www.postgresql.org/ |grep "PostgreSQL .* Released!" |grep -oE '[0-9\.]+' |grep $pgMajVersion)
 }
 
@@ -267,6 +269,8 @@ $( if [[ -n $pgAutoConfigFile ]]; then if [[ $pgAutoConfigNumLines -gt 0 ]]; the
   Log directory:             $(if [[ $(echo $pgLogDir |cut -c1) == "/" ]]; then echo "${green}$pgLogDir${reset}"; else echo "${red}$pgDataDir/$pgLogDir${reset}"; fi)
   Recovery?                  $pgRecoveryStatus
   Replica count:             $pgReplicaCount
+  NUMA policy:               $(if [[ -n $numaCurPolicy ]]; then if [[ $numaCurPolicy == "interleave" ]]; then echo "${green}$numaCurPolicy${reset}"; else echo "${red}$numaCurPolicy${reset}"; fi; \
+else echo "numa_maps not found"; fi)
 "
 sleep 0.1
 echo -e "${yellow}PostgreSQL: log file${reset}"
