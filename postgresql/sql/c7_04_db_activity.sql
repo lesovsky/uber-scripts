@@ -3,6 +3,7 @@ SELECT (clock_timestamp() - xact_start) AS xact_age,
        (clock_timestamp() - state_change) AS change_age,
        pid, state, datname, usename,
        coalesce(wait_event_type = 'Lock', 'f') AS waiting,
+       wait_event_type ||'.'|| wait_event as wait_details,
        client_addr ||'.'|| client_port AS client,
        query
 FROM pg_stat_activity
