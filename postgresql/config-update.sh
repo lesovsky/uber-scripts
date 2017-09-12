@@ -30,21 +30,31 @@ grep -oE "^[a-z_\. ]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
       if [[ $(grep -c -w $guc $destCfg) -eq 0 ]]; then
           echo "${yellow}WARNING:${reset} $destCfg doesn't contain ${red}$guc${reset} (value: $value)"
       else
-            if [[ $value =~ (8|9)\.[0-9]{1} ]];
+            if [[ $( echo $value |grep -wE '(8|9)\.[0-9]{1}|10' |wc -l) -ne 0 ]];
                 then
-                    echo "${yellow}WARNING:${reset} Skip $guc = $value"
+                    echo "${yellow}WARNING:${reset} Skip transfer of $guc = $value"
                 else
                     sed -r -i -e "s|(#\| )?$guc[ ]*=[ ]*('.*'\|[a-z0-9A-Z._-]+)|$guc = $value|g" $destCfg || echo "${red}ERROR:${reset} sed processing failed: $guc = $value"
             fi
       fi
   done
 
+# Check for new options
+echo "${green}INFO:${reset} $destCfg's new options:"
+grep -oE "^[a-z_\. #]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $destCfg |while read line;
+    do
+        guc=$(echo $line |cut -d= -f1 |tr -d " "#); value=$(echo $line |cut -d= -f2 |sed -e 's/^[ ]*//' -e 's/|/\\|/g')
+        if [[ $(grep -c -w $guc $srcCfg) -eq 0 ]]; then
+            echo -e "\t$guc = $value"
+        fi
+    done
+
 # check version-specific values
-echo "${green}Done.${reset} Don't forget to fix parameters with version-specific values."
-grep -oE "^[a-z_\. ]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
+echo "${red}INFO:${reset} Check the following parameters in $destCfg and fix values if required."
+grep -oE "^[a-z_\. ]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $destCfg |while read line;
   do
       guc=$(echo $line |cut -d= -f1 |tr -d " "); value=$(echo $line |cut -d= -f2 |sed -e 's/^[ ]*//')
-      if [[ $value =~ (8|9)\.[0-9]{1} ]]; then
-          echo "$guc = $value"
+      if [[ $( echo $value |grep -wE '(8|9)\.[0-9]{1}|10' |wc -l) -ne 0 ]]; then
+          echo -e "\t$guc = $value"
       fi
   done
