@@ -7,7 +7,6 @@ SELECT (clock_timestamp() - xact_start) AS xact_age,
        client_addr ||'.'|| client_port AS client,
        query
 FROM pg_stat_activity
-WHERE clock_timestamp() - coalesce(pg_stat_activity.xact_start,pg_stat_activity.query_start) > '00:00:00.1'::interval
-AND pg_stat_activity.pid <> pg_backend_pid()
-AND state <> 'idle'
-ORDER BY coalesce(pg_stat_activity.xact_start, pg_stat_activity.query_start);
+WHERE clock_timestamp() - coalesce(xact_start, query_start) > '00:00:00.1'::interval
+AND pid <> pg_backend_pid() AND state <> 'idle'
+ORDER BY coalesce(xact_start, query_start);
