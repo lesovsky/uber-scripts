@@ -1,3 +1,5 @@
+\x on
+\pset pager on
 SELECT
   COALESCE(l1.relation::regclass::text,l1.locktype) as locked_item, 
   w.wait_event_type as waiting_ev_type, w.wait_event as waiting_ev, w.query as waiting_query,

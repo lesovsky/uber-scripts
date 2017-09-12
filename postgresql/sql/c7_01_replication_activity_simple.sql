@@ -1,3 +1,5 @@
+\x off
+\pset pager off
 SELECT
     client_addr AS client,
     usename AS user,

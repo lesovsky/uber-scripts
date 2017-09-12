@@ -1,3 +1,5 @@
+\x off
+\pset pager off
 -- author: Viktor Yegorov
 WITH RECURSIVE l AS (
   SELECT pid, locktype, mode, granted, ROW(locktype,database,relation,page,tuple,virtualxid,transactionid,classid,objid,objsubid) obj FROM pg_locks
