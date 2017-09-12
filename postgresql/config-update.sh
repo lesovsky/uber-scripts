@@ -30,7 +30,12 @@ grep -oE "^[a-z_\. ]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
       if [[ $(grep -c -w $guc $destCfg) -eq 0 ]]; then
           echo "${yellow}WARNING:${reset} $destCfg doesn't contain ${red}$guc${reset} (value: $value)"
       else
-          sed -r -i -e "s|(#\| )?$guc[ ]*=[ ]*('.*'\|[a-z0-9A-Z._-]+)|$guc = $value|g" $destCfg || echo "${red}ERROR:${reset} sed processing failed: $guc = $value"
+            if [[ $value =~ (8|9)\.[0-9]{1} ]];
+                then
+                    echo "${yellow}WARNING:${reset} Skip $guc = $value"
+                else
+                    sed -r -i -e "s|(#\| )?$guc[ ]*=[ ]*('.*'\|[a-z0-9A-Z._-]+)|$guc = $value|g" $destCfg || echo "${red}ERROR:${reset} sed processing failed: $guc = $value"
+            fi
       fi
   done
 
@@ -39,7 +44,7 @@ echo "${green}Done.${reset} Don't forget to fix parameters with version-specific
 grep -oE "^[a-z_\. ]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
   do
       guc=$(echo $line |cut -d= -f1 |tr -d " "); value=$(echo $line |cut -d= -f2 |sed -e 's/^[ ]*//')
-      if [[ $value =~ (8|9|10)\.[0-9]{1} ]]; then
+      if [[ $value =~ (8|9)\.[0-9]{1} ]]; then
           echo "$guc = $value"
       fi
   done
