@@ -39,3 +39,8 @@ MegaCli -AdpEventLog -Clear -aN|-a0,1,2|-aALL
 
 # Diagnose
 megacli fwtermlog dsply aall > /tmp/out.log
+
+# Destroy/Create Logical Drives -- use Enclosure Device ID and Slot Number from PDList.
+MegaCli CfgLdDel l1 a0
+MegaCli CfgLdAdd -r1 [252:0,252:1] WT NORA Direct NoCachedBadBBU strpsz64 a0         # RAIDx uses CfgLdAdd clause
+MegaCli CfgSpanAdd -r10 -array0[252:0,252:1,252:2,252:3] -array1[252:4,252:5,252:6,252:7] WT NORA Direct NoCachedBadBBU strpsz64 a0         # RAID10 uses CfgSpanAdd clause
