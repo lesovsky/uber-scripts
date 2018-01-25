@@ -12,7 +12,6 @@ yellow=$(tput setaf 3)
 reset=$(tput sgr0)
 
 # defaults
-reportFile="checklist.data"
 psqlCmd="psql -tXAF: -U postgres"
 prgPager="less"
 [[ $(which vi 2>/dev/null) ]] && prgEditor=$(which vi) || prgEditor=$(which nano)
@@ -49,8 +48,8 @@ getHardwareData() {
 }
 
 getOsData() {
-  hostname=$(hostname)
-  full_hostname=$(hostname -f)
+  hostname=$(hostname 2>/dev/null)
+  full_hostname=$(hostname -f 2>/dev/null)
   arch=$(uname --machine)
   os=$(find /etc -maxdepth 1 -name '*release' -type f | xargs cat |grep ^PRETTY_NAME |cut -d= -f2 |tr -d \")
   kernel=$(uname -sr)
@@ -360,27 +359,6 @@ if [[ $answer == "y" ]]; then
 fi
 }
 
-reviewPgConfig() {
-answer=""
-while [[ $answer != "y" &&  $answer != "n" ]]
-  do
-    read -p "${yellow}Review postgresql.conf? [y/n]: ${reset}" answer
-  done
-if [[ $answer == "y" ]]; then
-    $prgPager $pgConfigFile
-    echo ""
-fi
-answer=""
-while [[ $answer != "y" &&  $answer != "n" ]]
-  do
-    read -p "${yellow}Review pg_hba.conf? [y/n]: ${reset}" answer
-  done
-if [[ $answer == "y" ]]; then
-    $prgPager $pgHbaFile
-    echo ""
-fi
-}
-
 doSingleDbAudit() {
 local psqlCmd2="$psqlCmd -d $targetDb"
 pgGetDbProperties="SELECT d.datname,
@@ -467,41 +445,16 @@ doDbAudit() {
   done
 }
 
-addComment() {
-  answer=""
-  fileComment=""
-  while [[ $answer != "f" ]]
-    do
-      sleep 0.1
-      read -p "${yellow}Add Comment or Finish? [c/f]: ${reset}" answer
-      if [[ $answer == "c" ]]; then     # add comment
-        [[ -z $fileComment ]] && fileComment=$(mktemp /tmp/audit-$(date +%Y-%m-%d-%H%M)-XXXXX.cmt)
-        $prgEditor $fileComment
-      fi
-    done
-  echo "${yellow}Comment section:${reset}" >> $reportFile
-  if [[ -f $fileComment ]]; then
-       cat $fileComment >> $reportFile
-       echo -e "${green}Comment saved to the report file $reportFile.${reset}"
-       [[ -f $fileComment ]] && rm $fileComment
-  fi
-  # clean out ANSI color codes
-  sed -i -r -e 's/\x1b\[[0-9;]*m//g' -e 's/\x1b\(B//g' $reportFile
-}
-
 main() {
-  [[ -f $reportFile ]] && mv $reportFile $reportFile.old 
   echo "Gathering information:"
   echo -n "  hardware..."; getHardwareData; echo -e "\tdone"
   echo -n "  software..."; getOsData; echo -e "\tdone"
   echo -n "  packages..."; getPkgInfo; echo -e "\tdone"
   echo -n "  postqresql..."; getPostgresCommonData; echo -e "\tdone"
   echo "Report:"
-  (printSummary) |tee -a $reportFile
-  reviewPgConfig
-  (doDbAudit) |tee -a $reportFile
-  addComment
-  echo "${green}Report saved to $reportFile.${reset}"
+  printSummary
+  doDbAudit
+  echo "${green}Finished.${reset}"
 }
 
 main
