@@ -27,23 +27,27 @@ grep -oE "^[a-z_\. ]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
   do
       # second e-script in sed is used for quotting '|' because that one is used as a separator in the next sed replacing command.
       guc=$(echo $line |cut -d= -f1 |tr -d " "); value=$(echo $line |cut -d= -f2- |sed -e 's/^[ ]*//' -e 's/|/\\|/g')
-      if [[ $(grep -c -w $guc $destCfg) -eq 0 ]]; then
+      if [[ $(grep -c -w $guc $destCfg) -eq 0 && $guc != *'.'* ]]; then
           echo "${yellow}WARNING:${reset} $destCfg doesn't contain ${red}$guc${reset} (value: $value)"
       else
-            if [[ $( echo $value |grep -wE '(8|9)\.[0-9]{1}|10' |wc -l) -ne 0 ]];
+            # skip version-specific parameters which look like paths and replace others
+            if [[ $( echo $value |grep -wE "'.*((8|9)\.[0-9]{1}|10).*'" |wc -l) -ne 0 ]];
                 then
                     echo "${yellow}WARNING:${reset} Skip transfer of $guc = $value"
                 else
+                    # replace regular parameters
                     sed -r -i -e "s|(#\| )?$guc[ ]*=[ ]*('.*'\|[a-z0-9A-Z._-]+)|$guc = $value|g" $destCfg || echo "${red}ERROR:${reset} sed processing failed: $guc = $value"
+                    # add extensions related parameters
+                    [[ $guc = *'.'* ]] && echo "$guc = $value" >> $destCfg
             fi
       fi
   done
 
-# Check for new options
+# check for new options
 echo "${green}INFO:${reset} $destCfg's new options:"
 grep -oE "^[a-z_\. #]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $destCfg |while read line;
     do
-        guc=$(echo $line |cut -d= -f1 |tr -d " "#); value=$(echo $line |cut -d= -f2 |sed -e 's/^[ ]*//' -e 's/|/\\|/g')
+        guc=$(echo $line |cut -d= -f1 |tr -d " "#); value=$(echo $line |cut -d= -f2- |sed -e 's/^[ ]*//' -e 's/|/\\|/g')
         if [[ $(grep -c -w $guc $srcCfg) -eq 0 ]]; then
             echo -e "\t$guc = $value"
         fi
@@ -53,8 +57,8 @@ grep -oE "^[a-z_\. #]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $destCfg |while read line
 echo "${red}INFO:${reset} Check the following parameters in $destCfg and fix values if required."
 grep -oE "^[a-z_\. ]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $destCfg |while read line;
   do
-      guc=$(echo $line |cut -d= -f1 |tr -d " "); value=$(echo $line |cut -d= -f2 |sed -e 's/^[ ]*//')
-      if [[ $( echo $value |grep -wE '(8|9)\.[0-9]{1}|10' |wc -l) -ne 0 ]]; then
+      guc=$(echo $line |cut -d= -f1 |tr -d " "); value=$(echo $line |cut -d= -f2- |sed -e 's/^[ ]*//')
+      if [[ $( echo $value |grep -wE "'.*((8|9)\.[0-9]{1}|10).*'" |wc -l) -ne 0 ]]; then
           echo -e "\t$guc = $value"
       fi
   done
