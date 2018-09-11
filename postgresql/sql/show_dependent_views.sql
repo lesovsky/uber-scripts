@@ -1,14 +1,21 @@
 -- show table's dependent views (DROP VIEW -> ALTER TABLE -> CREATE VIEW)
--- don't forget edit tablename in WHERE clause
-WITH RECURSIVE vlist AS (
-    SELECT c.oid::REGCLASS AS view_name
-      FROM pg_class c
-     WHERE c.relname = 'change_me'
-     UNION ALL
-    SELECT DISTINCT r.ev_class::REGCLASS AS view_name
-      FROM pg_depend d
-      JOIN pg_rewrite r ON (r.oid = d.objid)
-      JOIN vlist ON (vlist.view_name = d.refobjid)
-     WHERE d.refobjsubid != 0
-)
-SELECT * FROM vlist;
+-- don't forget edit WHERE conditions
+SELECT dependent_ns.nspname as dependent_schema
+, dependent_view.relname as dependent_view 
+, source_ns.nspname as source_schema
+, source_table.relname as source_table
+, pg_attribute.attname as column_name
+FROM pg_depend 
+JOIN pg_rewrite ON pg_depend.objid = pg_rewrite.oid 
+JOIN pg_class as dependent_view ON pg_rewrite.ev_class = dependent_view.oid 
+JOIN pg_class as source_table ON pg_depend.refobjid = source_table.oid 
+JOIN pg_attribute ON pg_depend.refobjid = pg_attribute.attrelid 
+    AND pg_depend.refobjsubid = pg_attribute.attnum 
+JOIN pg_namespace dependent_ns ON dependent_ns.oid = dependent_view.relnamespace
+JOIN pg_namespace source_ns ON source_ns.oid = source_table.relnamespace
+WHERE 
+source_ns.nspname = 'my_schema'
+AND source_table.relname = 'my_table'
+AND pg_attribute.attnum > 0 
+AND pg_attribute.attname = 'my_column'
+ORDER BY 1,2;
