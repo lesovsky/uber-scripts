@@ -37,21 +37,22 @@ temp_files AS (
     SELECT
         substring(filename FROM 'pgsql_tmp(\d+)')::int AS pid,
         td.tablespace,
-	td.path || filename as filename,
-        pg_stat_file(td.path || filename, true) AS file_stat
+        pg_stat_file(td.path || '/' || filename, true) AS file_stat
     FROM
         temp_dirs AS td,
         pg_catalog.pg_ls_dir(td.path, true, false) AS filename
 )
 SELECT
     a.pid,
-    now() - a.query_start as query_age,
     t.tablespace,
-    t.filename,
-    pg_size_pretty((file_stat).size) AS size,
-    now() - (file_stat).modification AS last_modification,
+    count(a.pid) as files,
+    pg_size_pretty(sum((file_stat).size)) AS total_size,
+    min(now() - (file_stat).modification) AS last_written,
+    min(now() - a.query_start) as query_age,
+    a.backend_type,
     a.query
 FROM temp_files t
 JOIN pg_stat_activity a ON (t.pid = a.pid)
-ORDER BY (file_stat).size DESC
+GROUP BY a.pid, t.tablespace, a.backend_type, a.query
+ORDER BY sum((file_stat).size) DESC
 --LIMIT 20

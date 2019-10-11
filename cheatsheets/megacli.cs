@@ -23,6 +23,10 @@ MegaCli ldinfo lall aall |grep -E '(Virtual Drive|RAID Level|Cache Policy|Access
 
 megacli ldsetprop WB RA DisDskCache NoCachedBadBBU lall aall    # set WriteBack, Adaptive ReadAhead, disable Disk Cache, Disable Cache when bad BBU
 
+# Switch drive from RAID mode to JBOD
+megacli adpsetprop enablejbod 1 aall
+megacli pdmakejbod physdrv [32:0,32:1,32:2,32:3,32:4,32:5] a0		# 32 - Enclosure Device ID; 0-5 - Slot Numbers
+
 # Misc
 megacli adpfwflash -f filename aN       # flash adapter firmware from image
 megacli phyerrorcounters aN             # get error counters for physical media

@@ -26,7 +26,7 @@ echo "${green}INFO:${reset} processing $destCfg"
 grep -oE "^[a-z_\. ]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
   do
       # second e-script in sed is used for quotting '|' because that one is used as a separator in the next sed replacing command.
-      guc=$(echo $line |cut -d= -f1 |tr -d " "); value=$(echo $line |cut -d= -f2- |sed -e 's/^[ ]*//' -e 's/|/\\|/g')
+      guc=$(echo $line |cut -d= -f1 |tr -d " "); value=$(echo $line |cut -d= -f2- |sed -e 's/^[ ]*//' -e 's/|/\\|/g' -e 's/&/\\&/g')
       if [[ $(grep -c -w $guc $destCfg) -eq 0 && $guc != *'.'* ]]; then
           echo "${yellow}WARNING:${reset} $destCfg doesn't contain ${red}$guc${reset} (value: $value)"
       else
