@@ -36,7 +36,7 @@ grep -oE "^[a-z_\. ]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
                     echo "${yellow}WARNING:${reset} Skip transfer of $guc = $value"
                 else
                     # replace regular parameters
-                    sed -r -i -e "s|(#\| )?$guc[ ]*=[ ]*('.*'\|[a-z0-9A-Z._-]+)|$guc = $value|g" $destCfg || echo "${red}ERROR:${reset} sed processing failed: $guc = $value"
+                    sed -r -i -e "s|^(#\| )?$guc[ ]*=[ ]*('.*'\|[a-z0-9A-Z._-]+)|$guc = $value|g" $destCfg || echo "${red}ERROR:${reset} sed processing failed: $guc = $value"
                     # add extensions related parameters
                     [[ $guc = *'.'* ]] && echo "$guc = $value" >> $destCfg
             fi
