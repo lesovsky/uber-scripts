@@ -25,13 +25,13 @@ cp $destCfg $destCfg.backup
 echo "${green}INFO:${reset} processing $destCfg"
 grep -oE "^[a-z_\. ]+[ ]*=[ ]*('.*'|[a-z0-9A-Z._-]+)" $srcCfg |while read line;
   do
-      # second e-script in sed is used for quotting '|' because that one is used as a separator in the next sed replacing command.
+      # second e-script in sed is used for quoting '|' because that one is used as a separator in the next sed replacing command.
       guc=$(echo $line |cut -d= -f1 |tr -d " "); value=$(echo $line |cut -d= -f2- |sed -e 's/^[ ]*//' -e 's/|/\\|/g' -e 's/&/\\&/g')
       if [[ $(grep -c -w $guc $destCfg) -eq 0 && $guc != *'.'* ]]; then
           echo "${yellow}WARNING:${reset} $destCfg doesn't contain ${red}$guc${reset} (value: $value)"
       else
             # skip version-specific parameters which look like paths and replace others
-            if [[ $( echo $value |grep -wE "'.*((8|9)\.[0-9]{1}|10).*'" |wc -l) -ne 0 ]];
+            if [[ $( echo $value |grep -wE "'.*((8|9)\.[0-9]{1}|1[0-9]{1}).*'" |wc -l) -ne 0 ]];
                 then
                     echo "${yellow}WARNING:${reset} Skip transfer of $guc = $value"
                 else
