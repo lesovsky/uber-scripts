@@ -1,23 +1,56 @@
--- author: Viktor Yegorov
-WITH RECURSIVE l AS (
-  SELECT pid, locktype, mode, granted, ROW(locktype,database,relation,page,tuple,virtualxid,transactionid,classid,objid,objsubid) obj FROM pg_locks
-), pairs AS (
-  SELECT w.pid waiter, l.pid locker, l.obj, l.mode
-    FROM l w JOIN l ON l.obj IS NOT DISTINCT FROM w.obj AND l.locktype=w.locktype AND NOT l.pid=w.pid AND l.granted
-   WHERE NOT w.granted
-), tree AS (
-  SELECT l.locker pid, l.locker root, NULL::record obj, NULL AS mode, 0 lvl, locker::text path, array_agg(l.locker) OVER () all_pids
-    FROM ( SELECT DISTINCT locker FROM pairs l WHERE NOT EXISTS (SELECT 1 FROM pairs WHERE waiter=l.locker) ) l
-  UNION ALL
-  SELECT w.waiter pid, tree.root, w.obj, w.mode, tree.lvl+1, tree.path||'.'||w.waiter, all_pids || array_agg(w.waiter) OVER ()
-    FROM tree JOIN pairs w ON tree.pid=w.locker AND NOT w.waiter = ANY ( all_pids )
+-- author: Postgres.ai team, with some fixes and improvements added by me
+with recursive activity as (
+    select
+        *,
+        pg_blocking_pids(pid) blocked_by,
+        age(clock_timestamp(), xact_start)::interval(0) as tx_age,
+        age(clock_timestamp(), (select max(l.waitstart) from pg_locks l where a.pid = l.pid))::interval(0) as wait_age
+    from pg_stat_activity a
+    where state is distinct from 'idle'
+), blockers as (
+    select array_agg(c) as pids from (select distinct unnest(blocked_by) from activity) as dt(c)
+), tree as (
+    select
+        activity.*,
+        1 as level,
+        activity.pid as top_blocker_pid,
+        array[activity.pid] as path,
+        array[activity.pid]::int[] as all_blockers_above
+    from activity, blockers
+    where
+            array[pid] <@ blockers.pids
+      and blocked_by = '{}'::int[]
+    union all
+    select
+        activity.*,
+        tree.level + 1 as level,
+        tree.top_blocker_pid,
+        path || array[activity.pid] as path,
+        tree.all_blockers_above || array_agg(activity.pid) over () as all_blockers_above
+    from activity, tree
+    where
+        not array[activity.pid] <@ tree.all_blockers_above
+      and activity.blocked_by <> '{}'::int[]
+      and activity.blocked_by <@ tree.path
 )
-SELECT (clock_timestamp() - a.xact_start)::interval(3) AS ts_age,
-       replace(a.state, 'idle in transaction', 'idletx') state,
-       (clock_timestamp() - state_change)::interval(3) AS change_age,
-       a.datname,tree.pid,a.usename,a.client_addr,lvl,
-       (SELECT count(*) FROM tree p WHERE p.path ~ ('^'||tree.path) AND NOT p.path=tree.path) blocked,
-       repeat(' .', lvl)||' '||left(regexp_replace(query, '\s+', ' ', 'g'),100) query
-  FROM tree
-  JOIN pg_stat_activity a USING (pid)
- ORDER BY path;
+select
+    pid,
+    blocked_by,
+    case when wait_event_type != 'Lock' then replace(state, 'idle in transaction', 'idletx') else 'waiting' end as state,
+    wait_event_type || ':' || wait_event as wait,
+    wait_age,
+    tx_age,
+    --to_char(age(backend_xid), 'FM999,999,999,990') AS xid_age,
+    --to_char(2147483647 - age(backend_xmin), 'FM999,999,999,990') AS xmin_ttf,
+    usename,
+    datname,
+    (select count(distinct t1.pid) from tree t1 where array[tree.pid] <@ t1.path and t1.pid <> tree.pid) as blkd,
+    format(
+            '%s %s%s',
+            lpad('[' || pid::text || ']', 9, ' '),
+            repeat('.', level - 1) || case when level > 1 then ' ' end,
+            left(query, 1000)
+        ) as query
+from tree
+order by top_blocker_pid, level, pid;
+
